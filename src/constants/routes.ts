@@ -1,0 +1,43 @@
+/**
+ * Typed route registry.
+ * Reference these instead of hard-coding path strings, so route
+ * changes stay refactor-safe.
+ */
+export const ROUTES = {
+  home: "/",
+  login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  verifyEmail: "/verify-email",
+  profile: "/profile",
+  dashboard: "/dashboard",
+  dashboardTrips: "/dashboard/trips",
+  dashboardPlanner: "/dashboard/planner",
+  dashboardWishlist: "/dashboard/wishlist",
+  dashboardCommunity: "/dashboard/community",
+  dashboardMessages: "/dashboard/messages",
+  dashboardNotifications: "/dashboard/notifications",
+  dashboardAchievements: "/dashboard/achievements",
+  dashboardProfile: "/dashboard/profile",
+  dashboardAccount: "/dashboard/account",
+  dashboardSecurity: "/dashboard/security",
+  dashboardBilling: "/dashboard/billing",
+  admin: "/admin",
+  destinations: "/destinations",
+  cafes: "/cafes",
+  guides: "/guides",
+  community: "/community",
+} as const;
+
+export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
+
+/** Detail route for a single destination. */
+export function destinationRoute(slug: string): string {
+  return `${ROUTES.destinations}/${slug}`;
+}
+
+/** Detail route for a single café. */
+export function cafeRoute(slug: string): string {
+  return `${ROUTES.cafes}/${slug}`;
+}

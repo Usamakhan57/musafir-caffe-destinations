@@ -1,0 +1,422 @@
+"use server";
+
+import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
+
+import { signIn, signOut } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+import type { ActionResult } from "../types";
+import { checkRateLimit } from "../lib/rate-limit";
+import {
+  loginSchema,
+  registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+  changePasswordSchema,
+  updateProfileSchema,
+} from "../schemas";
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+  verifyPassword,
+  createResetToken,
+  consumeResetToken,
+  updateUserPassword,
+  createVerifyToken,
+  consumeVerifyToken,
+  markEmailVerified,
+  updateUserProfile,
+  deleteUser,
+  incrementTokenVersion,
+} from "../data/user-store";
+
+const log = logger.child("auth:actions");
+
+// ── Login ─────────────────────────────────────────────────────
+
+export async function loginAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const raw = {
+    email: formData.get("email"),
+    password: formData.get("password"),
+    remember: formData.get("remember"),
+  };
+
+  const parsed = loginSchema.safeParse(raw);
+  if (parsed.success === false) {
+    return {
+      success: false,
+      message: "Invalid input.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const rateLimit = await checkRateLimit("login");
+  if (!rateLimit.ok) {
+    return {
+      success: false,
+      message: `Too many attempts. Please try again in ${rateLimit.retryAfter} seconds.`,
+    };
+  }
+
+  try {
+    const result = await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      remember: parsed.data.remember,
+      redirect: false,
+    });
+
+    if (result && typeof result === "object" && "error" in result && result.error) {
+      return {
+        success: false,
+        message: "Invalid email or password.",
+      };
+    }
+  } catch (error) {
+    if (error instanceof AuthError) {
+      log.warn("Login failed", { type: error.type });
+      return {
+        success: false,
+        message: "Invalid email or password.",
+      };
+    }
+    throw error;
+  }
+
+  redirect("/profile");
+}
+
+// ── Register ──────────────────────────────────────────────────
+
+export async function registerAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const raw = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+    role: formData.get("role") ?? "traveler",
+  };
+
+  const parsed = registerSchema.safeParse(raw);
+  if (parsed.success === false) {
+    return {
+      success: false,
+      message: "Please fix the errors below.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const rateLimit = await checkRateLimit("register");
+  if (!rateLimit.ok) {
+    return {
+      success: false,
+      message: `Too many attempts. Please try again in ${rateLimit.retryAfter} seconds.`,
+    };
+  }
+
+  try {
+    await createUser({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      role: parsed.data.role,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("already exists")) {
+      return {
+        success: false,
+        message: "A user with this email already exists.",
+        errors: { email: ["A user with this email already exists."] },
+      };
+    }
+    log.error("Registration failed", { error });
+    return { success: false, message: "Something went wrong. Please try again." };
+  }
+
+  // Generate verification token (in production, send via email)
+  const user = findUserByEmail(parsed.data.email);
+  if (user) {
+    const token = createVerifyToken(parsed.data.email);
+    log.info("Verification token created (dev)", { token, email: parsed.data.email });
+  }
+
+  // Auto sign-in after registration
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirect: false,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      log.warn("Auto sign-in after register failed", { type: error.type });
+      redirect("/login");
+    }
+    throw error;
+  }
+
+  redirect("/dashboardrd");
+}
+
+// ── Forgot Password ──────────────────────────────────────────
+
+export async function forgotPasswordAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const raw = { email: formData.get("email") };
+
+  const parsed = forgotPasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Invalid input.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const user = findUserByEmail(parsed.data.email);
+  if (user) {
+    const token = createResetToken(parsed.data.email);
+    // In production, send this token via email
+    log.info("Reset token created (dev)", { token, email: parsed.data.email });
+  }
+
+  // Always return success to prevent email enumeration
+  return {
+    success: true,
+    message: "If an account exists with that email, you will receive a password reset link.",
+  };
+}
+
+// ── Reset Password ───────────────────────────────────────────
+
+export async function resetPasswordAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const raw = {
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  };
+
+  const parsed = resetPasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Please fix the errors below.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const tokenData = consumeResetToken(parsed.data.token);
+  if (!tokenData) {
+    return {
+      success: false,
+      message: "Invalid or expired reset token. Please request a new one.",
+    };
+  }
+
+  const user = findUserByEmail(tokenData.email);
+  if (!user) {
+    return { success: false, message: "User not found." };
+  }
+
+  const updated = await updateUserPassword(user.id, parsed.data.password);
+  if (!updated) {
+    return { success: false, message: "Failed to update password." };
+  }
+
+  return {
+    success: true,
+    message: "Password has been reset successfully. You can now log in.",
+  };
+}
+
+// ── Verify Email ─────────────────────────────────────────────
+
+export async function verifyEmailAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const raw = { token: formData.get("token") };
+
+  const parsed = verifyEmailSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Invalid verification token.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const tokenData = consumeVerifyToken(parsed.data.token);
+  if (!tokenData) {
+    return {
+      success: false,
+      message: "Invalid or expired verification token.",
+    };
+  }
+
+  const verified = markEmailVerified(tokenData.email);
+  if (!verified) {
+    return { success: false, message: "User not found." };
+  }
+
+  return {
+    success: true,
+    message: "Email verified successfully!",
+  };
+}
+
+// ── Update Profile ───────────────────────────────────────────
+
+export async function updateProfileAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, message: "You must be logged in." };
+  }
+
+  const raw = {
+    name: formData.get("name"),
+    image: formData.get("image"),
+    emailNotifications: formData.get("emailNotifications"),
+    pushNotifications: formData.get("pushNotifications"),
+    privacyMode: formData.get("privacyMode"),
+  };
+
+  const parsed = updateProfileSchema.safeParse(raw);
+  if (parsed.success === false) {
+    return {
+      success: false,
+      message: "Invalid input.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const updated = updateUserProfile(session.user.id, {
+    name: parsed.data.name,
+    image: parsed.data.image,
+    preferences: {
+      emailNotifications: parsed.data.emailNotifications,
+      pushNotifications: parsed.data.pushNotifications,
+      privacyMode: parsed.data.privacyMode,
+    },
+  });
+  if (!updated) {
+    return { success: false, message: "Failed to update profile." };
+  }
+
+  return { success: true, message: "Profile updated successfully." };
+}
+
+// ── Change Password ──────────────────────────────────────────
+
+export async function changePasswordAction(
+  _prev: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, message: "You must be logged in." };
+  }
+
+  const raw = {
+    currentPassword: formData.get("currentPassword"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  };
+
+  const parsed = changePasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Please fix the errors below.",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const user = findUserById(session.user.id);
+  if (!user) {
+    return { success: false, message: "User not found." };
+  }
+
+  const isValidPassword = await verifyPassword(parsed.data.currentPassword, user.password);
+  if (!isValidPassword) {
+    return {
+      success: false,
+      message: "Current password is incorrect.",
+      errors: { currentPassword: ["Current password is incorrect."] },
+    };
+  }
+
+  const updated = await updateUserPassword(session.user.id, parsed.data.password);
+  if (!updated) {
+    return { success: false, message: "Failed to update password." };
+  }
+
+  incrementTokenVersion(session.user.id);
+
+  return {
+    success: true,
+    message: "Password updated successfully. You have been signed out everywhere.",
+  };
+}
+
+// ── Delete Account ───────────────────────────────────────────
+
+export async function deleteAccountAction(): Promise<ActionResult> {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, message: "You must be logged in." };
+  }
+
+  const deleted = deleteUser(session.user.id);
+  if (!deleted) {
+    return { success: false, message: "Failed to delete account." };
+  }
+
+  await signOut({ redirectTo: "/" });
+  return { success: true, message: "Your account was deleted." };
+}
+
+// ── Logout ───────────────────────────────────────────────────
+
+export async function logoutAction(): Promise<void> {
+  await signOut({ redirectTo: "/" });
+}
+
+export async function logoutAllAction(): Promise<ActionResult> {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, message: "You must be logged in." };
+  }
+
+  incrementTokenVersion(session.user.id);
+  await signOut({ redirectTo: "/" });
+
+  return {
+    success: true,
+    message: "You have been signed out of all sessions.",
+  };
+}

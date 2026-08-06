@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand palette: coffee browns, warm creams, forest greens ── */
+  --color-cream-50: #faf7f2;
+  --color-cream-100: #f4eee3;
+  --color-cream-200: #e9ddc9;
+  --color-cream-300: #dbc8a8;
+  --color-cream-400: #c9ae83;
+
+  --color-coffee-100: #e7d7c9;
+  --color-coffee-200: #cbb09a;
+  --color-coffee-300: #a9825f;
+  --color-coffee-400: #8c6742;
+  --color-coffee-500: #6f4e2f;
+  --color-coffee-600: #583c23;
+  --color-coffee-700: #422d1a;
+  --color-coffee-800: #2e1f12;
+  --color-coffee-900: #1d130a;
+  --color-coffee-950: #120b05;
+
+  --color-forest-100: #dde8df;
+  --color-forest-200: #bccfc2;
+  --color-forest-300: #93b09d;
+  --color-forest-400: #6a8f76;
+  --color-forest-500: #4d7359;
+  --color-forest-600: #3a5a46;
+  --color-forest-700: #2e4838;
+  --color-forest-800: #23362b;
+  --color-forest-900: #182720;
+
+  --color-gold-400: #d4a853;
+  --color-gold-500: #c49a3d;
+  --color-gold-600: #b08a30;
+
+  /* Typography */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, serif;
+
+  /* Brand shadows */
+  --shadow-warm: 0 20px 45px -18px rgb(66 45 26 / 0.28);
+  --shadow-card: 0 12px 32px -14px rgb(29 19 10 / 0.22);
+  --shadow-elevated: 0 25px 50px -12px rgb(29 19 10 / 0.25);
+  --shadow-glow: 0 0 40px rgb(58 90 70 / 0.15);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream-50);
+  color: var(--color-coffee-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-forest-600);
+  color: var(--color-cream-50);
+}
+
+/* Subtle grain texture for hero / dark sections */
+.texture-grain {
+  background-image: radial-gradient(
+      circle at 20% 30%,
+      rgb(255 255 255 / 0.06) 0,
+      transparent 45%
+    ),
+    radial-gradient(circle at 80% 70%, rgb(255 255 255 / 0.05) 0, transparent 40%);
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgb(255 255 255 / 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgb(255 255 255 / 0.3);
+}
+
+/* Premium card hover effect */
+.card-hover {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Image zoom on hover */
+.img-zoom img {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.img-zoom:hover img {
+  transform: scale(1.08);
+}
+
+/* Gold shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-gold-400),
+    var(--color-gold-500),
+    #e8c87a,
+    var(--color-gold-500),
+    var(--color-gold-400)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

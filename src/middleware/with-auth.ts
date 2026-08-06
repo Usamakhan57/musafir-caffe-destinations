@@ -1,0 +1,67 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+import type { ProxyHandler } from "./chain";
+
+/**
+ * Protected routes configuration.
+ * Routes listed here require authentication.
+ * Role-based routes require the user to have the specified role.
+ */
+const PROTECTED_ROUTES = ["/profile", "/dashboard", "/community", "/guides", "/cafes"] as const;
+const ROLE_PROTECTED_ROUTES = {
+  admin: ["/admin"],
+  "cafe-owner": ["/cafes"],
+  "guide-creator": ["/guides"],
+  traveler: ["/community"],
+} as const;
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
+
+function getSessionToken(request: NextRequest): string | undefined {
+  return (
+    request.cookies.get("authjs.session-token")?.value ??
+    request.cookies.get("__Secure-authjs.session-token")?.value
+  );
+}
+
+/**
+ * Auth middleware module for the proxy chain.
+ *
+ * - Redirects unauthenticated users away from protected routes.
+ * - Redirects authenticated users away from auth pages (login/register).
+ * - Blocks non-admin users from admin routes.
+ *
+ * Note: This checks for the presence of a session cookie as a fast guard.
+ * Full session validation happens server-side in route handlers / pages.
+ */
+export const withAuth: ProxyHandler = (request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+  const token = getSessionToken(request);
+  const isAuthenticated = Boolean(token);
+
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  if (isAuthRoute && isAuthenticated) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  if (isProtectedRoute && !isAuthenticated) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const isAdminRoute = ROLE_PROTECTED_ROUTES.admin.some((route) => pathname.startsWith(route));
+  if (isAdminRoute && !isAuthenticated) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (isAdminRoute && isAuthenticated) {
+    const role = request.cookies.get("authjs.role")?.value;
+    if (role !== "admin") {
+      return NextResponse.redirect(new URL("/profile", request.url));
+    }
+  }
+
+  return undefined;
+};
