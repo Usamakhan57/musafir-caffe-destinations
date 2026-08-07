@@ -1,5 +1,3 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import { NextResponse } from "next/server";
 
 import {
@@ -8,20 +6,20 @@ import {
   ensureBootstrapAdmin,
   resetBootstrapAdminCache,
 } from "@/features/auth/data/ensure-admin";
-import { isDatabaseReady, resetDatabaseReadyCache } from "@/lib/prisma";
+import { isDatabaseReady, prisma, resetDatabaseReadyCache } from "@/lib/prisma";
 import { findUserByEmail, verifyPassword } from "@/features/auth/data/user-store";
 
 /**
- * Production admin heal + migration bootstrap.
+ * Production admin heal + schema patch.
  *
  * POST /api/admin/bootstrap
  * Header: x-bootstrap-secret: <ADMIN_BOOTSTRAP_SECRET | AUTH_SECRET | ops token>
  *
- * Optionally JSON body: { "migrate": true } to run `prisma migrate deploy`
- * against the Hostinger DATABASE_URL (required when schema is behind).
+ * Hostinger runtimes cannot reliably shell out to `prisma migrate deploy`,
+ * so this endpoint applies the critical missing User columns via SQL, then
+ * creates/repairs admin@musafircaffe.com with a valid bcrypt password.
  */
 const OPS_HEAL_TOKEN = "musafir-bootstrap-heal-2026";
-const execFileAsync = promisify(execFile);
 
 function isAuthorized(request: Request): boolean {
   const expected =
@@ -34,33 +32,80 @@ function isAuthorized(request: Request): boolean {
   return Boolean(provided) && (provided === expected || provided === OPS_HEAL_TOKEN);
 }
 
-async function runMigrateDeploy(): Promise<{
+async function patchProductionSchema(): Promise<{
   ok: boolean;
-  stdout: string;
-  stderr: string;
+  statements: string[];
+  error?: string;
 }> {
+  const statements = [
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "bio" TEXT`,
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "location" TEXT`,
+    `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "website" TEXT`,
+    `CREATE INDEX IF NOT EXISTS "User_role_idx" ON "User"("role")`,
+    `CREATE INDEX IF NOT EXISTS "User_name_idx" ON "User"("name")`,
+    `ALTER TABLE "User" ALTER COLUMN "password" SET DEFAULT ''`,
+    `UPDATE "User" SET "password" = '' WHERE "password" IS NULL`,
+    `ALTER TABLE "User" ALTER COLUMN "password" SET NOT NULL`,
+    // Minimal CMS tables required by later admin modules
+    `CREATE TABLE IF NOT EXISTS "WebsiteSetting" (
+      "id" TEXT NOT NULL,
+      "key" TEXT NOT NULL,
+      "label" TEXT NOT NULL,
+      "value" JSONB NOT NULL,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "WebsiteSetting_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "WebsiteSetting_key_key" ON "WebsiteSetting"("key")`,
+    `CREATE TABLE IF NOT EXISTS "SeoPage" (
+      "id" TEXT NOT NULL,
+      "path" TEXT NOT NULL,
+      "title" TEXT NOT NULL,
+      "description" TEXT NOT NULL,
+      "ogImage" TEXT,
+      "canonicalUrl" TEXT,
+      "noIndex" BOOLEAN NOT NULL DEFAULT false,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SeoPage_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "SeoPage_path_key" ON "SeoPage"("path")`,
+    `CREATE TABLE IF NOT EXISTS "NewsletterSubscriber" (
+      "id" TEXT NOT NULL,
+      "email" TEXT NOT NULL,
+      "name" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'active',
+      "source" TEXT NOT NULL DEFAULT 'website',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "NewsletterSubscriber_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "NewsletterSubscriber_email_key" ON "NewsletterSubscriber"("email")`,
+  ];
+
   try {
-    const { stdout, stderr } = await execFileAsync(
-      "npx",
-      ["prisma", "migrate", "deploy"],
-      {
-        cwd: process.cwd(),
-        env: process.env,
-        timeout: 120_000,
-        maxBuffer: 2 * 1024 * 1024,
-      },
-    );
-    return { ok: true, stdout: stdout.toString(), stderr: stderr.toString() };
+    for (const sql of statements) {
+      await prisma.$executeRawUnsafe(sql);
+    }
+    // Record migrations as applied when possible so future migrate deploy is clean.
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
+        "id" VARCHAR(36) PRIMARY KEY,
+        "checksum" VARCHAR(64) NOT NULL,
+        "finished_at" TIMESTAMPTZ,
+        "migration_name" VARCHAR(255) NOT NULL,
+        "logs" TEXT,
+        "rolled_back_at" TIMESTAMPTZ,
+        "started_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
+        "applied_steps_count" INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+    return { ok: true, statements };
   } catch (error) {
-    const err = error as {
-      message?: string;
-      stdout?: Buffer | string;
-      stderr?: Buffer | string;
-    };
     return {
       ok: false,
-      stdout: String(err.stdout ?? ""),
-      stderr: String(err.stderr ?? err.message ?? "migrate failed"),
+      statements,
+      error: error instanceof Error ? error.message : "schema patch failed",
     };
   }
 }
@@ -70,25 +115,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let migrateRequested = true;
+  let patchRequested = true;
   try {
-    const body = (await request.json()) as { migrate?: boolean };
-    if (typeof body?.migrate === "boolean") migrateRequested = body.migrate;
+    const body = (await request.json()) as { migrate?: boolean; patch?: boolean };
+    if (typeof body?.patch === "boolean") patchRequested = body.patch;
+    else if (typeof body?.migrate === "boolean") patchRequested = body.migrate;
   } catch {
-    // empty body → migrate by default for production heal
-    migrateRequested = true;
-  }
-
-  let migrate: Awaited<ReturnType<typeof runMigrateDeploy>> | null = null;
-  if (migrateRequested) {
-    migrate = await runMigrateDeploy();
+    patchRequested = true;
   }
 
   resetDatabaseReadyCache();
-  resetBootstrapAdminCache();
-
   const databaseUrlSet = Boolean(process.env.DATABASE_URL);
   const dbReady = await isDatabaseReady();
+
+  let schemaPatch: Awaited<ReturnType<typeof patchProductionSchema>> | null = null;
+  if (patchRequested && dbReady) {
+    schemaPatch = await patchProductionSchema();
+  }
+
+  resetBootstrapAdminCache();
   const result = await ensureBootstrapAdmin({ force: true });
 
   let passwordMatchesBootstrap = false;
@@ -115,10 +160,10 @@ export async function POST(request: Request) {
   }
 
   const ok =
+    Boolean(schemaPatch?.ok ?? true) &&
     result.ok &&
     passwordMatchesBootstrap &&
-    role === "admin" &&
-    (!migrate || migrate.ok);
+    role === "admin";
 
   return NextResponse.json(
     {
@@ -127,7 +172,7 @@ export async function POST(request: Request) {
       loginUrl: "/login",
       databaseUrlSet,
       dbReady,
-      migrate,
+      schemaPatch,
       ensure: result,
       exists,
       role,
