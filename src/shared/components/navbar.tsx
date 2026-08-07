@@ -1,12 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, Search, X } from "lucide-react";
 
-import { APP_NAME, ROUTES } from "@/constants";
+import { ROUTES } from "@/constants";
 import { cn } from "@/shared/utils";
 
 const navLinks = [
@@ -65,19 +66,17 @@ export function Navbar() {
       >
         <Link
           href={ROUTES.home}
-          className="flex min-w-0 items-center gap-3 text-[#111827] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
+          className="flex min-w-0 items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
+          aria-label="MusafirCaffe home"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0F766E] text-lg font-semibold text-white shadow-[0_12px_28px_-14px_rgba(15,118,110,0.55)] sm:h-11 sm:w-11">
-            M
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold uppercase tracking-[0.22em] text-[#0F766E]">
-              {APP_NAME}
-            </p>
-            <p className="hidden text-xs font-medium text-[#6B7280] sm:block">
-              Travel · Coffee · Community
-            </p>
-          </div>
+          <Image
+            src="/musafircaffe-logo.png"
+            alt="MusafirCaffe"
+            width={1536}
+            height={1024}
+            priority={true}
+            className="h-10 w-auto bg-transparent sm:h-[46px] lg:h-[52px]"
+          />
         </Link>
 
         <div className="hidden flex-1 items-center justify-center gap-1 xl:gap-2 lg:flex">
