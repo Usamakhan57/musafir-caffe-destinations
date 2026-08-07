@@ -1,4 +1,5 @@
-import { StaggerContainer, StaggerItem } from "@/shared/ui";
+import { StaggerContainer, StaggerItem, EmptyState } from "@/shared/ui";
+import { ROUTES } from "@/constants";
 
 import type { DestinationSummary } from "../types";
 import { DestinationCard } from "./destination-card";
@@ -10,20 +11,19 @@ interface DestinationsGridProps {
 export function DestinationsGrid({ destinations }: DestinationsGridProps) {
   if (destinations.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-cream-300 py-20 text-center">
-        <span className="font-serif text-xl font-semibold text-coffee-900">
-          No destinations match those filters
-        </span>
-        <p className="max-w-md text-sm text-coffee-600">
-          Try clearing a filter or searching a different city, country, or region.
-        </p>
-      </div>
+      <EmptyState
+        variant="search"
+        title="No destinations match those filters"
+        description="Try clearing a filter or searching a different city, country, or region."
+        actionHref={ROUTES.destinations}
+        actionLabel="Clear filters"
+      />
     );
   }
 
   return (
     <StaggerContainer
-      className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"
       staggerDelay={0.08}
     >
       {destinations.map((destination, index) => (

@@ -46,8 +46,8 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
   const { items, page, totalPages } = paginate(sorted, filters.page, DESTINATIONS_PAGE_SIZE);
 
   return (
-      <main className="flex flex-1 flex-col pt-24 lg:pt-28">
-        <section className="mx-auto w-full max-w-7xl px-6 pb-8 pt-8 sm:pt-12">
+      <main className="flex flex-1 flex-col bg-[#FAFAF9]">
+        <section className="mx-auto w-full max-w-7xl px-5 pb-8 pt-10 sm:px-8 sm:pt-12 lg:px-12">
           <SectionHeading
             eyebrow="Explore"
             title="Destinations"
@@ -56,7 +56,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
           />
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-6 pb-24">
+        <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-8 sm:pb-24 lg:px-12">
           <DestinationsToolbar filters={{ ...filters, page }} options={filterOptions} resultCount={filtered.length} />
 
           <div className="mt-10">

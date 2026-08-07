@@ -17,20 +17,33 @@ export function SectionHeading({
   id,
 }: SectionHeadingProps) {
   const alignment = align === "center" ? "items-center text-center" : "items-start text-left";
-  const titleColor = theme === "dark" ? "text-cream-50" : "text-coffee-900";
-  const bodyColor = theme === "dark" ? "text-cream-200/80" : "text-coffee-600";
+  const titleColor = theme === "dark" ? "text-white" : "text-[#111827]";
+  const bodyColor = theme === "dark" ? "text-white/75" : "text-[#6B7280]";
+  const eyebrowColor = theme === "dark" ? "text-[#99F6E4]" : "text-[#0F766E]";
+  const ruleColor = theme === "dark" ? "bg-[#99F6E4]/50" : "bg-[#0F766E]/50";
 
   return (
     <div className={`flex max-w-2xl flex-col gap-4 ${alignment}`}>
-      <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-forest-600">
-        <span aria-hidden className="h-px w-8 bg-forest-500" />
+      <span
+        className={`inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] ${eyebrowColor}`}
+      >
+        <span aria-hidden className={`h-px w-8 ${ruleColor}`} />
         {eyebrow}
-        {align === "center" && <span aria-hidden className="h-px w-8 bg-forest-500" />}
+        {align === "center" ? (
+          <span aria-hidden className={`h-px w-8 ${ruleColor}`} />
+        ) : null}
       </span>
-      <h2 id={id} className={`font-serif text-3xl leading-tight font-semibold sm:text-4xl ${titleColor}`}>
+      <h2
+        id={id}
+        className={`font-serif text-3xl leading-tight font-semibold tracking-tight sm:text-4xl ${titleColor}`}
+      >
         {title}
       </h2>
-      {description ? <p className={`text-lg leading-relaxed ${bodyColor}`}>{description}</p> : null}
+      {description ? (
+        <p className={`text-base leading-relaxed sm:text-lg sm:leading-8 ${bodyColor}`}>
+          {description}
+        </p>
+      ) : null}
     </div>
   );
 }

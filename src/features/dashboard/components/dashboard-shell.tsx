@@ -3,6 +3,7 @@ import type { Session } from "next-auth";
 
 import { ROUTES } from "@/constants/routes";
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import { cn } from "@/shared/utils";
 import { getRoleLabel } from "../lib/dashboard-utils";
 
 interface DashboardShellProps {
@@ -31,62 +32,107 @@ const navigation = [
   { name: "Billing", href: ROUTES.dashboardBilling, description: "Plans and invoices" },
 ];
 
-export function DashboardShell({ session, title, description, activePath, children }: DashboardShellProps) {
+export function DashboardShell({
+  session,
+  title,
+  description,
+  activePath,
+  children,
+}: DashboardShellProps) {
   const role = getRoleLabel(session.user.role);
   const profileCompletion = session.user.isEmailVerified ? 92 : 76;
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#f8fbff_0%,#eff6ff_45%,#ffffff_100%)] text-slate-900">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row lg:px-8 lg:py-8">
-        <aside className="w-full shrink-0 rounded-[28px] border border-blue-100 bg-white/90 p-5 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur lg:w-80">
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-700">Member lounge</p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-900">{session.user.name}</h2>
-            <p className="mt-1 text-sm text-slate-600">{role} · {session.user.email}</p>
-            <div className="mt-4 h-2 rounded-full bg-blue-100">
-              <div className="h-2 rounded-full bg-blue-600" style={{ width: `${profileCompletion}%` }} />
+    <div className="min-h-screen bg-[#FAFAF9] text-[#111827]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:flex-row lg:gap-6 lg:px-8 lg:py-8">
+        <aside className="w-full shrink-0 rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-[0_18px_50px_-34px_rgba(15,118,110,0.3)] sm:p-5 lg:w-80">
+          <div className="rounded-2xl border border-[#0F766E]/15 bg-[#0F766E]/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0F766E]">
+              Member lounge
+            </p>
+            <h2 className="mt-2 font-serif text-xl font-semibold text-[#111827]">
+              {session.user.name}
+            </h2>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              {role} · {session.user.email}
+            </p>
+            <div
+              className="mt-4 h-2 overflow-hidden rounded-full bg-[#0F766E]/15"
+              role="progressbar"
+              aria-valuenow={profileCompletion}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Profile completion"
+            >
+              <div
+                className="h-2 rounded-full bg-[#0F766E] transition-all"
+                style={{ width: `${profileCompletion}%` }}
+              />
             </div>
-            <p className="mt-2 text-sm text-slate-600">Profile {profileCompletion}% complete</p>
+            <p className="mt-2 text-sm text-[#6B7280]">
+              Profile {profileCompletion}% complete
+            </p>
           </div>
 
-          <nav className="mt-6 space-y-1">
+          <nav className="mt-5 max-h-[50vh] space-y-1 overflow-y-auto pr-1 lg:max-h-none" aria-label="Dashboard">
             {navigation.map((item) => {
               const isActive = activePath === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center justify-between rounded-2xl px-3 py-2.5 text-sm transition-colors ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-11 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]",
                     isActive
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                  }`}
+                      ? "bg-[#0F766E] text-white shadow-sm"
+                      : "text-[#4B5563] hover:bg-[#0F766E]/8 hover:text-[#0F766E]",
+                  )}
                 >
-                  <span>{item.name}</span>
-                  <span className={`text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{item.description}</span>
+                  <span className="font-medium">{item.name}</span>
+                  <span
+                    className={cn(
+                      "hidden text-[11px] sm:inline",
+                      isActive ? "text-teal-100" : "text-[#9CA3AF]",
+                    )}
+                  >
+                    {item.description}
+                  </span>
                 </Link>
               );
             })}
           </nav>
 
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-900">Need a fresh plan?</p>
-            <p className="mt-1 text-sm text-slate-600">Your dashboard stays aligned with your next destination, your best cafés, and your community energy.</p>
-            <Link href={ROUTES.dashboard} className="mt-4 inline-flex text-sm font-medium text-blue-700">
+          <div className="mt-6 rounded-2xl border border-[#E5E7EB] bg-[#FAFAF9] p-4">
+            <p className="text-sm font-semibold text-[#111827]">Need a fresh plan?</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
+              Keep your next destination, cafés, and community energy aligned in one place.
+            </p>
+            <Link
+              href={ROUTES.dashboard}
+              className="mt-4 inline-flex text-sm font-semibold text-[#0F766E] transition hover:underline"
+            >
               Open overview →
             </Link>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-5">
             <LogoutButton />
           </div>
         </aside>
 
-        <main className="flex-1 rounded-[32px] border border-blue-100 bg-white/80 p-5 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.35)] backdrop-blur lg:p-8">
-          <div className="mb-6 border-b border-slate-200 pb-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-blue-700">Private dashboard</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">{title}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">{description}</p>
+        <main className="min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-[0_20px_60px_-38px_rgba(15,118,110,0.3)] sm:p-6 lg:p-8">
+          <div className="mb-6 border-b border-[#E5E7EB] pb-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0F766E]">
+              Private dashboard
+            </p>
+            <h1 className="mt-2 font-serif text-2xl font-semibold text-[#111827] sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6B7280] sm:text-base">
+              {description}
+            </p>
           </div>
           {children}
         </main>
@@ -102,13 +148,18 @@ interface DashboardPageProps {
   action?: React.ReactNode;
 }
 
-export function DashboardPage({ title, description, children, action }: DashboardPageProps) {
+export function DashboardPage({
+  title,
+  description,
+  children,
+  action,
+}: DashboardPageProps) {
   return (
-    <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-[#E5E7EB] bg-[#FAFAF9] p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-          <p className="mt-1 text-sm text-slate-600">{description}</p>
+          <h2 className="font-serif text-xl font-semibold text-[#111827]">{title}</h2>
+          <p className="mt-1 text-sm text-[#6B7280]">{description}</p>
         </div>
         {action}
       </div>

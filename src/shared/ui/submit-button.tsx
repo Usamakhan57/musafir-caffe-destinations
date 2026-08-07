@@ -2,24 +2,23 @@
 
 import { useFormStatus } from "react-dom";
 
-interface SubmitButtonProps {
-  children: React.ReactNode;
-  className?: string;
+import { Button, type ButtonProps } from "./button";
+
+interface SubmitButtonProps extends Omit<ButtonProps, "type" | "loading"> {
+  pendingLabel?: string;
 }
 
-export function SubmitButton({ children, className }: SubmitButtonProps) {
+export function SubmitButton({
+  children,
+  pendingLabel = "Please wait…",
+  fullWidth = true,
+  ...props
+}: SubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={
-        className ??
-        "w-full rounded-lg bg-forest-600 px-6 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-700 disabled:cursor-not-allowed disabled:opacity-50"
-      }
-    >
-      {pending ? "Please wait..." : children}
-    </button>
+    <Button type="submit" loading={pending} fullWidth={fullWidth} {...props}>
+      {pending ? pendingLabel : children}
+    </Button>
   );
 }

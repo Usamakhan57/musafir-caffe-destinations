@@ -59,15 +59,15 @@ html {
 }
 
 body {
-  background-color: var(--color-cream-50);
-  color: var(--color-coffee-900);
+  background-color: var(--color-brand-bg);
+  color: var(--color-brand-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background-color: var(--color-forest-600);
-  color: var(--color-cream-50);
+  background-color: var(--color-brand-primary);
+  color: white;
 }
 
 /* Subtle grain texture for hero / dark sections */
@@ -95,7 +95,7 @@ body {
 
 .card-hover:hover {
   transform: translateY(-6px);
-  box-shadow: var(--shadow-elevated);
+  box-shadow: 0 24px 50px -28px rgb(15 118 110 / 0.35);
 }
 
 /* Image zoom on hover */
@@ -104,7 +104,76 @@ body {
 }
 
 .img-zoom:hover img {
-  transform: scale(1.08);
+  transform: scale(1.06);
+}
+
+/* Button ripple-like press feedback */
+.btn-ripple {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgb(255 255 255 / 0.28), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.btn-ripple:active::after {
+  opacity: 1;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 100;
+  border-radius: 0.75rem;
+  background: #0f766e;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Safer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .card-hover,
+  .img-zoom img,
+  .btn-ripple {
+    transition: none !important;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  .img-zoom:hover img {
+    transform: none;
+  }
 }
 
 /* Gold shimmer */

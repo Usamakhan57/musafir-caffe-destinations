@@ -32,10 +32,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-[#FFFFFF] font-sans text-[#111827]">
+      <body className="flex min-h-full flex-col bg-[#FAFAF9] font-sans text-[#111827]">
         <Providers>
           <Navbar />
-          {children}
+          <div id="main-content" className="flex flex-1 flex-col">
+            {children}
+          </div>
           <Footer />
         </Providers>
       </body>
