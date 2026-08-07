@@ -7,38 +7,56 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Application roles — Supabase/Postgres enum ready.
 enum UserRole {
   traveler
   cafe_owner
   guide_creator
+  editor
+  moderator
   admin
 }
 
+enum ContentStatus {
+  draft
+  published
+  archived
+}
+
+enum ReviewTargetType {
+  destination
+  cafe
+  guide
+  community
+}
+
 model User {
-  id                     String                  @id @default(uuid())
-  name                   String
-  email                  String                  @unique
-  password               String?
-  image                  String?
-  role                   UserRole                @default(traveler)
-  emailVerified         Boolean                 @default(false)
-  tokenVersion          Int                     @default(0)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  preferences           Preferences?
-  passwordResetTokens   PasswordResetToken[]
+  id                      String                   @id @default(uuid())
+  name                    String
+  email                   String                   @unique
+  password                String?
+  image                   String?
+  role                    UserRole                 @default(traveler)
+  emailVerified           Boolean                  @default(false)
+  tokenVersion            Int                      @default(0)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  preferences             Preferences?
+  passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  reviews                 Review[]                 @relation("ReviewAuthor")
+  mediaUploads            MediaAsset[]             @relation("MediaUploader")
 }
 
 model Preferences {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  emailNotifications  Boolean  @default(true)
-  pushNotifications   Boolean  @default(true)
-  privacyMode         String   @default("private")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  privacyMode        String   @default("private")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model PasswordResetToken {
@@ -57,4 +75,118 @@ model EmailVerificationToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+/// CMS category taxonomy (destinations, guides, community, etc.)
+model Category {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  description String?
+  scope       String        @default("general")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  destinations CmsDestination[]
+  cafes        CmsCafe[]
+  guides       CmsGuide[]
+  community    CmsCommunityPost[]
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CmsDestination {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  country     String
+  city        String
+  summary     String
+  status      ContentStatus @default(draft)
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  coverImage  String?
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CmsCafe {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  city        String
+  country     String
+  summary     String
+  status      ContentStatus @default(draft)
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  coverImage  String?
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CmsGuide {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  authorName  String
+  summary     String
+  status      ContentStatus @default(draft)
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  coverImage  String?
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CmsCommunityPost {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  authorName  String
+  summary     String
+  status      ContentStatus @default(draft)
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  coverImage  String?
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Review {
+  id         String           @id @default(uuid())
+  targetType ReviewTargetType
+  targetId   String
+  targetName String
+  rating     Int
+  body       String
+  status     ContentStatus    @default(draft)
+  authorId   String?
+  author     User?            @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model MediaAsset {
+  id           String   @id @default(uuid())
+  title        String
+  url          String
+  alt          String?
+  mimeType     String   @default("image/jpeg")
+  sizeBytes    Int      @default(0)
+  folder       String   @default("uploads")
+  uploadedById String?
+  uploadedBy   User?    @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

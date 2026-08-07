@@ -13,6 +13,8 @@ const PROTECTED_ROUTES = ["/profile", "/dashboard"] as const;
 const ROLE_PROTECTED_ROUTES = {
   admin: ["/admin"],
 } as const;
+
+const STAFF_ROLES = new Set(["admin", "editor", "moderator"]);
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
 
 function getSessionToken(request: NextRequest): string | undefined {
@@ -56,7 +58,7 @@ export const withAuth: ProxyHandler = (request: NextRequest) => {
 
   if (isAdminRoute && isAuthenticated) {
     const role = request.cookies.get("authjs.role")?.value;
-    if (role !== "admin") {
+    if (!role || !STAFF_ROLES.has(role)) {
       return NextResponse.redirect(new URL("/profile", request.url));
     }
   }

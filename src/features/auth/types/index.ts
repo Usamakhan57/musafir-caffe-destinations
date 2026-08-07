@@ -1,5 +1,11 @@
 /** User roles for RBAC. */
-export type UserRole = "traveler" | "cafe-owner" | "guide-creator" | "admin";
+export type UserRole =
+  | "traveler"
+  | "cafe-owner"
+  | "guide-creator"
+  | "editor"
+  | "moderator"
+  | "admin";
 
 export interface UserPreferences {
   emailNotifications: boolean;
