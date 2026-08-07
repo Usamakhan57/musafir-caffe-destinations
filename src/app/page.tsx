@@ -1,5 +1,5 @@
+import { Hero } from "@/features/home/components/hero";
 import {
-  Hero,
   FeaturedDestinations,
   FeaturedCafes,
   ExploreContinents,
@@ -14,6 +14,7 @@ import {
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col bg-[#FAFAF9]">
+      {/* Homepage Hero: premium split layout (src/features/home/components/hero.tsx) — no image overlay. */}
       <Hero />
       <FeaturedDestinations />
       <FeaturedCafes />
