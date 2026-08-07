@@ -54,6 +54,8 @@ declare module "@auth/core/jwt" {
     id: string;
     role: UserRole;
     isEmailVerified: boolean;
+    tokenVersion?: number;
+    remember?: boolean;
     preferences: {
       emailNotifications: boolean;
       pushNotifications: boolean;
@@ -98,7 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = findUserByEmail(email);
+        const user = await findUserByEmail(email);
         if (!user) return null;
 
         const valid = await verifyPassword(password, user.password);
@@ -118,7 +120,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account, credentials }) {
       if (account?.provider === "google" || account?.provider === "github") {
-        const oauthUser = findOrCreateOAuthUser({
+        const oauthUser = await findOrCreateOAuthUser({
           email: user.email!,
           name: user.name ?? "User",
           image: user.image ?? undefined,
@@ -128,7 +130,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       if (account?.provider === "credentials") {
-        const stored = user.id ? findUserById(user.id) : undefined;
+        const stored = user.id ? await findUserById(user.id) : undefined;
         if (stored) {
           user.role = stored.role;
           (user as AuthUserWithPreferences).preferences = stored.preferences;
@@ -155,7 +157,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       if (token.id) {
-        const stored = findUserById(token.id);
+        const stored = await findUserById(token.id);
         if (!stored) {
           return null;
         }

@@ -32,3 +32,4 @@ tmp-*.js
 # Screenshots
 screenshot-*.png
 capture-*.js
+/src/generated/prisma

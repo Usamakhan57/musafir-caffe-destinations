@@ -142,9 +142,9 @@ export async function registerAction(
   }
 
   // Generate verification token (in production, send via email)
-  const user = findUserByEmail(parsed.data.email);
+  const user = await findUserByEmail(parsed.data.email);
   if (user) {
-    const token = createVerifyToken(parsed.data.email);
+    const token = await createVerifyToken(parsed.data.email);
     log.info("Verification token created (dev)", { token, email: parsed.data.email });
   }
 
@@ -183,9 +183,9 @@ export async function forgotPasswordAction(
     };
   }
 
-  const user = findUserByEmail(parsed.data.email);
+  const user = await findUserByEmail(parsed.data.email);
   if (user) {
-    const token = createResetToken(parsed.data.email);
+    const token = await createResetToken(parsed.data.email);
     // In production, send this token via email
     log.info("Reset token created (dev)", { token, email: parsed.data.email });
   }
@@ -218,7 +218,7 @@ export async function resetPasswordAction(
     };
   }
 
-  const tokenData = consumeResetToken(parsed.data.token);
+  const tokenData = await consumeResetToken(parsed.data.token);
   if (!tokenData) {
     return {
       success: false,
@@ -226,7 +226,7 @@ export async function resetPasswordAction(
     };
   }
 
-  const user = findUserByEmail(tokenData.email);
+  const user = await findUserByEmail(tokenData.email);
   if (!user) {
     return { success: false, message: "User not found." };
   }
@@ -259,7 +259,7 @@ export async function verifyEmailAction(
     };
   }
 
-  const tokenData = consumeVerifyToken(parsed.data.token);
+  const tokenData = await consumeVerifyToken(parsed.data.token);
   if (!tokenData) {
     return {
       success: false,
@@ -267,7 +267,7 @@ export async function verifyEmailAction(
     };
   }
 
-  const verified = markEmailVerified(tokenData.email);
+  const verified = await markEmailVerified(tokenData.email);
   if (!verified) {
     return { success: false, message: "User not found." };
   }
@@ -308,7 +308,7 @@ export async function updateProfileAction(
     };
   }
 
-  const updated = updateUserProfile(session.user.id, {
+  const updated = await updateUserProfile(session.user.id, {
     name: parsed.data.name,
     image: parsed.data.image,
     preferences: {
@@ -352,7 +352,7 @@ export async function changePasswordAction(
     };
   }
 
-  const user = findUserById(session.user.id);
+  const user = await findUserById(session.user.id);
   if (!user) {
     return { success: false, message: "User not found." };
   }
@@ -371,7 +371,7 @@ export async function changePasswordAction(
     return { success: false, message: "Failed to update password." };
   }
 
-  incrementTokenVersion(session.user.id);
+  await incrementTokenVersion(session.user.id);
 
   return {
     success: true,
@@ -389,7 +389,7 @@ export async function deleteAccountAction(): Promise<ActionResult> {
     return { success: false, message: "You must be logged in." };
   }
 
-  const deleted = deleteUser(session.user.id);
+  const deleted = await deleteUser(session.user.id);
   if (!deleted) {
     return { success: false, message: "Failed to delete account." };
   }
@@ -412,7 +412,7 @@ export async function logoutAllAction(): Promise<ActionResult> {
     return { success: false, message: "You must be logged in." };
   }
 
-  incrementTokenVersion(session.user.id);
+  await incrementTokenVersion(session.user.id);
   await signOut({ redirectTo: "/" });
 
   return {

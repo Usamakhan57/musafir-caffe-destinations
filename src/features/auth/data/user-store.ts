@@ -1,22 +1,75 @@
 import { hash, compare } from "bcryptjs";
 
+import { prisma } from "@/lib/prisma";
 import type { StoredUser, SafeUser, UserRole, UserPreferences } from "../types";
+import type {
+  User as PrismaUser,
+  Preferences as PrismaPreferences,
+  UserRole as PrismaUserRole,
+  PrismaClient as PrismaClientType,
+} from "@/generated/prisma/client";
 
-/**
- * In-memory user store.
- *
- * This is a development-only persistence layer. Replace with a real
- * database (Prisma, Drizzle, etc.) before shipping to production.
- * The API surface stays the same — swap the implementation, not the callers.
- */
+const defaultPreferences: UserPreferences = {
+  emailNotifications: true,
+  pushNotifications: true,
+  privacyMode: "private",
+};
 
-const users = new Map<string, StoredUser>();
-const emailIndex = new Map<string, string>(); // email → id
-const resetTokens = new Map<string, { email: string; expiresAt: Date }>();
-const verifyTokens = new Map<string, { email: string; expiresAt: Date }>();
+type UserWithPreferences = PrismaUser & {
+  preferences: PrismaPreferences | null;
+};
+
+type TransactionClient = Parameters<PrismaClientType["$transaction"]>[0] extends (
+  tx: infer T,
+) => unknown
+  ? T
+  : never;
+
+function mapRoleToDb(role: UserRole): PrismaUserRole {
+  switch (role) {
+    case "cafe-owner":
+      return "cafe_owner";
+    case "guide-creator":
+      return "guide_creator";
+    default:
+      return role as PrismaUserRole;
+  }
+}
+
+function mapRoleFromDb(role: PrismaUserRole): UserRole {
+  switch (role) {
+    case "cafe_owner":
+      return "cafe-owner";
+    case "guide_creator":
+      return "guide-creator";
+    default:
+      return role as UserRole;
+  }
+}
 
 function generateId(): string {
   return crypto.randomUUID();
+}
+
+function toStoredUser(user: UserWithPreferences): StoredUser {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    password: user.password ?? "",
+    role: mapRoleFromDb(user.role),
+    emailVerified: user.emailVerified,
+    tokenVersion: user.tokenVersion,
+    image: user.image ?? undefined,
+    preferences: user.preferences
+      ? {
+          emailNotifications: user.preferences.emailNotifications,
+          pushNotifications: user.preferences.pushNotifications,
+          privacyMode: user.preferences.privacyMode as UserPreferences["privacyMode"],
+        }
+      : defaultPreferences,
+    createdAt: user.createdAt,
+  };
 }
 
 function toSafeUser(user: StoredUser): SafeUser {
@@ -33,46 +86,57 @@ export async function createUser(data: {
   password: string;
   role?: UserRole;
 }): Promise<SafeUser> {
-  if (emailIndex.has(data.email.toLowerCase())) {
+  const normalizedEmail = data.email.toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existing) {
     throw new Error("A user with this email already exists.");
   }
 
-  const id = generateId();
   const hashedPassword = await hash(data.password, 12);
+  const createdUser = await prisma.$transaction(async (tx: TransactionClient) => {
+    const user = await tx.user.create({
+      data: {
+        name: data.name,
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: mapRoleToDb(data.role ?? "traveler"),
+        emailVerified: false,
+        tokenVersion: 0,
+        preferences: {
+          create: {},
+        },
+      },
+      include: {
+        preferences: true,
+      },
+    });
 
-  const user: StoredUser = {
-    id,
-    name: data.name,
-    email: data.email.toLowerCase(),
-    password: hashedPassword,
-    role: data.role ?? "traveler",
-    emailVerified: false,
-    tokenVersion: 0,
-    preferences: {
-      emailNotifications: true,
-      pushNotifications: true,
-      privacyMode: "private",
-    },
-    createdAt: new Date(),
-  };
+    return user;
+  });
 
-  users.set(id, user);
-  emailIndex.set(user.email, id);
-
-  return toSafeUser(user);
+  return toSafeUser(toStoredUser(createdUser as UserWithPreferences));
 }
 
-export function findUserByEmail(email: string): StoredUser | undefined {
-  const id = emailIndex.get(email.toLowerCase());
-  return id ? users.get(id) : undefined;
+export async function findUserByEmail(email: string): Promise<StoredUser | undefined> {
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+    include: { preferences: true },
+  });
+
+  return user ? toStoredUser(user as UserWithPreferences) : undefined;
 }
 
-export function findUserById(id: string): StoredUser | undefined {
-  return users.get(id);
+export async function findUserById(id: string): Promise<StoredUser | undefined> {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: { preferences: true },
+  });
+
+  return user ? toStoredUser(user as UserWithPreferences) : undefined;
 }
 
-export function getSafeUser(id: string): SafeUser | undefined {
-  const user = users.get(id);
+export async function getSafeUser(id: string): Promise<SafeUser | undefined> {
+  const user = await findUserById(id);
   return user ? toSafeUser(user) : undefined;
 }
 
@@ -83,16 +147,16 @@ export async function verifyPassword(
   return compare(plaintext, hashed);
 }
 
-export function markEmailVerified(email: string): boolean {
-  const id = emailIndex.get(email.toLowerCase());
-  if (!id) return false;
-  const user = users.get(id);
-  if (!user) return false;
-  users.set(id, { ...user, emailVerified: true });
-  return true;
+export async function markEmailVerified(email: string): Promise<boolean> {
+  const result = await prisma.user.updateMany({
+    where: { email: email.toLowerCase() },
+    data: { emailVerified: true },
+  });
+
+  return result.count > 0;
 }
 
-export function updateUserProfile(
+export async function updateUserProfile(
   id: string,
   data: {
     name?: string;
@@ -100,124 +164,196 @@ export function updateUserProfile(
     role?: UserRole;
     preferences?: Partial<UserPreferences>;
   },
-): SafeUser | undefined {
-  const user = users.get(id);
-  if (!user) return undefined;
-  const updated: StoredUser = {
-    ...user,
-    ...(data.name !== undefined && { name: data.name }),
-    ...(data.image !== undefined && { image: data.image }),
-    ...(data.role !== undefined && { role: data.role }),
-    preferences: {
-      ...user.preferences,
-      ...(data.preferences?.emailNotifications !== undefined && {
-        emailNotifications: data.preferences.emailNotifications,
-      }),
-      ...(data.preferences?.pushNotifications !== undefined && {
-        pushNotifications: data.preferences.pushNotifications,
-      }),
-      ...(data.preferences?.privacyMode !== undefined && {
-        privacyMode: data.preferences.privacyMode,
-      }),
-    },
-  };
-  users.set(id, updated);
-  return toSafeUser(updated);
+): Promise<SafeUser | undefined> {
+  const updateData: { name?: string; image?: string | null; role?: PrismaUserRole } = {};
+
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+
+  if (data.image !== undefined) {
+    updateData.image = data.image || null;
+  }
+
+  if (data.role !== undefined) {
+    updateData.role = mapRoleToDb(data.role);
+  }
+
+  await prisma.user.updateMany({
+    where: { id },
+    data: updateData,
+  });
+
+  if (data.preferences) {
+    await prisma.preferences.upsert({
+      where: { userId: id },
+      update: {
+        ...(data.preferences.emailNotifications !== undefined && {
+          emailNotifications: data.preferences.emailNotifications,
+        }),
+        ...(data.preferences.pushNotifications !== undefined && {
+          pushNotifications: data.preferences.pushNotifications,
+        }),
+        ...(data.preferences.privacyMode !== undefined && {
+          privacyMode: data.preferences.privacyMode as UserPreferences["privacyMode"],
+        }),
+      },
+      create: {
+        userId: id,
+        emailNotifications: data.preferences.emailNotifications ?? defaultPreferences.emailNotifications,
+        pushNotifications: data.preferences.pushNotifications ?? defaultPreferences.pushNotifications,
+        privacyMode: (data.preferences.privacyMode ?? defaultPreferences.privacyMode) as UserPreferences["privacyMode"],
+      },
+    });
+  }
+
+  const updated = await findUserById(id);
+  return updated ? toSafeUser(updated) : undefined;
 }
 
 export async function updateUserPassword(
   id: string,
   newPassword: string,
 ): Promise<boolean> {
-  const user = users.get(id);
-  if (!user) return false;
   const hashedPassword = await hash(newPassword, 12);
-  users.set(id, { ...user, password: hashedPassword });
-  return true;
+  const result = await prisma.user.updateMany({
+    where: { id },
+    data: { password: hashedPassword },
+  });
+
+  return result.count > 0;
 }
 
-export function deleteUser(id: string): boolean {
-  const user = users.get(id);
-  if (!user) return false;
-  emailIndex.delete(user.email);
-  return users.delete(id);
+export async function deleteUser(id: string): Promise<boolean> {
+  try {
+    await prisma.user.delete({ where: { id } });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function incrementTokenVersion(id: string): boolean {
-  const user = users.get(id);
-  if (!user) return false;
-  users.set(id, { ...user, tokenVersion: user.tokenVersion + 1 });
-  return true;
+export async function incrementTokenVersion(id: string): Promise<boolean> {
+  const result = await prisma.user.updateMany({
+    where: { id },
+    data: { tokenVersion: { increment: 1 } },
+  });
+
+  return result.count > 0;
 }
 
 // ── Token helpers ─────────────────────────────────────────────
 
-export function createResetToken(email: string): string {
+export async function createResetToken(email: string): Promise<string> {
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user) {
+    return "";
+  }
+
   const token = generateId();
-  resetTokens.set(token, {
-    email: email.toLowerCase(),
-    expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+  await prisma.passwordResetToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    },
   });
+
   return token;
 }
 
-export function consumeResetToken(
+export async function consumeResetToken(
   token: string,
-): { email: string } | undefined {
-  const entry = resetTokens.get(token);
-  if (!entry) return undefined;
-  resetTokens.delete(token);
-  if (entry.expiresAt < new Date()) return undefined;
-  return { email: entry.email };
+): Promise<{ email: string } | undefined> {
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!record) {
+    return undefined;
+  }
+
+  await prisma.passwordResetToken.delete({ where: { id: record.id } });
+  if (record.expiresAt < new Date()) {
+    return undefined;
+  }
+
+  return { email: record.user.email };
 }
 
-export function createVerifyToken(email: string): string {
+export async function createVerifyToken(email: string): Promise<string> {
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user) {
+    return "";
+  }
+
   const token = generateId();
-  verifyTokens.set(token, {
-    email: email.toLowerCase(),
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+  await prisma.emailVerificationToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    },
   });
+
   return token;
 }
 
-export function consumeVerifyToken(
+export async function consumeVerifyToken(
   token: string,
-): { email: string } | undefined {
-  const entry = verifyTokens.get(token);
-  if (!entry) return undefined;
-  verifyTokens.delete(token);
-  if (entry.expiresAt < new Date()) return undefined;
-  return { email: entry.email };
+): Promise<{ email: string } | undefined> {
+  const record = await prisma.emailVerificationToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!record) {
+    return undefined;
+  }
+
+  await prisma.emailVerificationToken.delete({ where: { id: record.id } });
+  if (record.expiresAt < new Date()) {
+    return undefined;
+  }
+
+  return { email: record.user.email };
 }
 
 // ── OAuth helpers ─────────────────────────────────────────────
 
-export function findOrCreateOAuthUser(profile: {
+export async function findOrCreateOAuthUser(profile: {
   email: string;
   name: string;
   image?: string;
-}): SafeUser {
-  const existing = findUserByEmail(profile.email);
-  if (existing) return toSafeUser(existing);
+}): Promise<SafeUser> {
+  const existing = await findUserByEmail(profile.email);
+  if (existing) {
+    return toSafeUser(existing);
+  }
 
-  const id = generateId();
-  const user: StoredUser = {
-    id,
-    name: profile.name,
-    email: profile.email.toLowerCase(),
-    password: "", // OAuth users have no password
-    role: "traveler",
-    emailVerified: true,
-    tokenVersion: 0,
-    image: profile.image,
-    preferences: {
-      emailNotifications: true,
-      pushNotifications: true,
-      privacyMode: "private",
-    },
-    createdAt: new Date(),
-  };
-  users.set(id, user);
-  emailIndex.set(user.email, id);
-  return toSafeUser(user);
+  const normalizedEmail = profile.email.toLowerCase();
+  const createdUser = await prisma.$transaction(async (tx: TransactionClient) => {
+    const user = await tx.user.create({
+      data: {
+        name: profile.name,
+        email: normalizedEmail,
+        password: "",
+        role: mapRoleToDb("traveler"),
+        emailVerified: true,
+        tokenVersion: 0,
+        image: profile.image,
+        preferences: {
+          create: {},
+        },
+      },
+      include: {
+        preferences: true,
+      },
+    });
+
+    return user;
+  });
+
+  return toSafeUser(toStoredUser(createdUser as UserWithPreferences));
 }

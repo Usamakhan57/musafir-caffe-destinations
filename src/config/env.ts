@@ -23,6 +23,11 @@ export interface EnvConfig {
   readonly apiBaseUrl: string;
   /** Auth secret used by NextAuth/ Auth.js. */
   readonly authSecret: string;
+  /** Base URL used by Auth.js. */
+  readonly authUrl: string;
+  /** Database connection strings for Prisma. */
+  readonly databaseUrl: string;
+  readonly directUrl: string;
   /** OAuth provider credentials. */
   readonly googleClientId: string | undefined;
   readonly googleClientSecret: string | undefined;
@@ -65,6 +70,9 @@ function createEnv(): EnvConfig {
       "http://localhost:3000/api",
     ),
     authSecret: resolveString("AUTH_SECRET", process.env.AUTH_SECRET, "development-secret"),
+    authUrl: resolveString("AUTH_URL", process.env.AUTH_URL, "http://localhost:3000"),
+    databaseUrl: resolveString("DATABASE_URL", process.env.DATABASE_URL),
+    directUrl: resolveString("DIRECT_URL", process.env.DIRECT_URL, process.env.DATABASE_URL),
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     githubClientId: process.env.GITHUB_CLIENT_ID,
