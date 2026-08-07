@@ -1,30 +1,30 @@
-import { SectionHeading } from "@/shared/ui";
+import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
-const TRENDING = [
-  { title: "Island Escapes", count: 1240 },
-  { title: "Café Routes", count: 980 },
-  { title: "Mountain Retreats", count: 760 },
-];
+import { getAuthorForGuide, getTrendingGuides } from "../data/guides-store";
+import GuideCard from "./guide-card";
 
-export default function TrendingGuides() {
+export default async function TrendingGuides() {
+  const guides = await getTrendingGuides();
+
+  if (guides.length === 0) return null;
+
   return (
-    <section className="mt-16">
+    <section className="mt-16" aria-labelledby="trending-guides-heading">
       <SectionHeading
+        id="trending-guides-heading"
         eyebrow="Trending"
-        title="What travelers are saving right now"
+        title="What travelers are reading right now"
         description="Explore the most popular guides, routes, and café collections from our community."
         align="left"
       />
 
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {TRENDING.map((t) => (
-          <div key={t.title} className="rounded-3xl bg-white p-8 shadow-card transition hover:-translate-y-1 hover:shadow-elevated">
-            <div className="text-sm uppercase tracking-[0.24em] text-slate-500">{t.title}</div>
-            <div className="mt-4 text-3xl font-semibold text-coffee-900">{t.count.toLocaleString()}</div>
-            <div className="mt-2 text-sm text-coffee-600">Guides saved by adventurous travelers.</div>
-          </div>
+      <StaggerContainer className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3" staggerDelay={0.12}>
+        {guides.map((guide) => (
+          <StaggerItem key={guide.slug}>
+            <GuideCard guide={guide} author={getAuthorForGuide(guide)} />
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerContainer>
     </section>
   );
 }

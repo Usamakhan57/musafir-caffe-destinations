@@ -5,16 +5,23 @@ import { useState, type FormEvent } from "react";
 
 import { ROUTES } from "@/constants";
 
+import { GUIDE_CATEGORIES } from "../types";
+
 export default function GuidesSearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [country, setCountry] = useState("");
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
+    const params = new URLSearchParams();
     const q = query.trim();
-    router.push(
-      q ? `${ROUTES.destinations}?q=${encodeURIComponent(q)}` : ROUTES.destinations,
-    );
+    if (q) params.set("q", q);
+    if (category) params.set("category", category);
+    if (country) params.set("country", country);
+    const qs = params.toString();
+    router.push(qs ? `${ROUTES.guides}?${qs}#browse-guides` : `${ROUTES.guides}#browse-guides`);
   };
 
   return (
@@ -27,7 +34,7 @@ export default function GuidesSearch() {
       >
         <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:items-center">
           <div>
-            <p className="text-sm text-coffee-600">Search guides, cafés, and curated routes</p>
+            <p className="text-sm text-coffee-600">Search guides, destinations, and curated routes</p>
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2">
               <label className="sr-only" htmlFor="guides-search">
                 Search query
@@ -37,7 +44,7 @@ export default function GuidesSearch() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="min-w-0 flex-1 rounded-2xl border border-transparent bg-slate-50 px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 sm:py-4"
-                placeholder="Search destination, café, or travel theme"
+                placeholder="Search destination, theme, or travel style"
                 aria-label="Search guides"
               />
             </div>
@@ -46,17 +53,36 @@ export default function GuidesSearch() {
           <div className="grid gap-3 sm:grid-cols-3 lg:flex lg:items-center lg:justify-end">
             <select
               className="h-12 min-w-0 rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 sm:h-[64px]"
-              aria-label="Filter by region"
-              defaultValue="all"
+              aria-label="Filter by country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
             >
-              <option value="all">All regions</option>
+              <option value="">All countries</option>
+              <option value="Türkiye">Türkiye</option>
+              <option value="Australia">Australia</option>
+              <option value="Ethiopia">Ethiopia</option>
+              <option value="Thailand">Thailand</option>
+              <option value="Austria">Austria</option>
+              <option value="Portugal">Portugal</option>
+              <option value="Japan">Japan</option>
+              <option value="South Africa">South Africa</option>
+              <option value="Vietnam">Vietnam</option>
+              <option value="Colombia">Colombia</option>
+              <option value="France">France</option>
+              <option value="Guatemala">Guatemala</option>
             </select>
             <select
               className="h-12 min-w-0 rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 sm:h-[64px]"
               aria-label="Filter by category"
-              defaultValue="all"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
             >
-              <option value="all">All categories</option>
+              <option value="">All categories</option>
+              {GUIDE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
             <button
               type="submit"
