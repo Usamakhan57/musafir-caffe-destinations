@@ -46,6 +46,49 @@ async function patchProductionSchema(): Promise<{
     `ALTER TABLE "User" ALTER COLUMN "password" SET DEFAULT ''`,
     `UPDATE "User" SET "password" = '' WHERE "password" IS NULL`,
     `ALTER TABLE "User" ALTER COLUMN "password" SET NOT NULL`,
+    // Auth-adjacent tables required by ensureBootstrapAdmin / Auth.js
+    `CREATE TABLE IF NOT EXISTS "Preferences" (
+      "id" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "emailNotifications" BOOLEAN NOT NULL DEFAULT true,
+      "pushNotifications" BOOLEAN NOT NULL DEFAULT true,
+      "privacyMode" TEXT NOT NULL DEFAULT 'private',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "Preferences_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "Preferences_userId_key" ON "Preferences"("userId")`,
+    `CREATE TABLE IF NOT EXISTS "Profile" (
+      "id" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "displayName" TEXT,
+      "headline" TEXT,
+      "avatarUrl" TEXT,
+      "coverUrl" TEXT,
+      "socials" JSONB,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL,
+      CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "Profile_userId_key" ON "Profile"("userId")`,
+    `CREATE TABLE IF NOT EXISTS "PasswordResetToken" (
+      "id" TEXT NOT NULL,
+      "token" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "expiresAt" TIMESTAMP(3) NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "PasswordResetToken_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "PasswordResetToken_token_key" ON "PasswordResetToken"("token")`,
+    `CREATE TABLE IF NOT EXISTS "EmailVerificationToken" (
+      "id" TEXT NOT NULL,
+      "token" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "expiresAt" TIMESTAMP(3) NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "EmailVerificationToken_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "EmailVerificationToken_token_key" ON "EmailVerificationToken"("token")`,
     // Minimal CMS tables required by later admin modules
     `CREATE TABLE IF NOT EXISTS "WebsiteSetting" (
       "id" TEXT NOT NULL,

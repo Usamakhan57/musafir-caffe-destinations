@@ -16,6 +16,27 @@ const globalEnsure = globalThis as typeof globalThis & {
   __musafirAdminEnsure?: Promise<EnsureResult> | EnsureResult;
 };
 
+async function ensureProfileAndPreferences(userId: string, name: string) {
+  try {
+    await prisma.preferences.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
+    });
+  } catch (error) {
+    console.warn("[bootstrap-admin] preferences upsert skipped:", error);
+  }
+  try {
+    await prisma.profile.upsert({
+      where: { userId },
+      create: { userId, displayName: name },
+      update: {},
+    });
+  } catch (error) {
+    console.warn("[bootstrap-admin] profile upsert skipped:", error);
+  }
+}
+
 /**
  * Ensures the production bootstrap admin exists with a valid bcrypt password.
  * Safe to call repeatedly — runs at most once per process unless forced.
@@ -42,7 +63,7 @@ export async function ensureBootstrapAdmin(options?: {
     const existing = await prisma.user.findUnique({ where: { email } });
 
     if (!existing) {
-      await prisma.user.create({
+      const created = await prisma.user.create({
         data: {
           name: "Amina Admin",
           email,
@@ -50,12 +71,9 @@ export async function ensureBootstrapAdmin(options?: {
           role: "admin",
           emailVerified: true,
           tokenVersion: 0,
-          preferences: { create: {} },
-          profile: {
-            create: { displayName: "Amina Admin" },
-          },
         },
       });
+      await ensureProfileAndPreferences(created.id, created.name);
       return { ok: true, action: "created" };
     }
 
@@ -64,6 +82,7 @@ export async function ensureBootstrapAdmin(options?: {
       (await compare(password, existing.password!));
 
     if (hasValidPassword && existing.role === "admin") {
+      await ensureProfileAndPreferences(existing.id, existing.name);
       return { ok: true, action: "unchanged" };
     }
 
@@ -76,11 +95,7 @@ export async function ensureBootstrapAdmin(options?: {
       },
     });
 
-    await prisma.profile.upsert({
-      where: { userId: existing.id },
-      create: { userId: existing.id, displayName: existing.name },
-      update: {},
-    });
+    await ensureProfileAndPreferences(existing.id, existing.name);
 
     return { ok: true, action: "password_updated" };
   })();

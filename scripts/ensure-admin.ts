@@ -24,6 +24,7 @@ async function main() {
     await prisma.$queryRaw`SELECT 1`;
     const existing = await prisma.user.findUnique({ where: { email } });
 
+    let userId: string;
     if (!existing) {
       const created = await prisma.user.create({
         data: {
@@ -32,12 +33,12 @@ async function main() {
           password: passwordHash,
           role: "admin",
           emailVerified: true,
-          preferences: { create: {} },
-          profile: { create: { displayName: "Amina Admin" } },
         },
       });
+      userId = created.id;
       console.log("Created bootstrap admin:", created.id);
     } else {
+      userId = existing.id;
       const valid =
         Boolean(existing.password) && (await compare(password, existing.password!));
       if (!valid || existing.role !== "admin") {
@@ -53,11 +54,21 @@ async function main() {
       } else {
         console.log("Bootstrap admin already valid:", existing.id);
       }
-      await prisma.profile.upsert({
-        where: { userId: existing.id },
-        create: { userId: existing.id, displayName: existing.name },
+    }
+
+    try {
+      await prisma.preferences.upsert({
+        where: { userId },
+        create: { userId },
         update: {},
       });
+      await prisma.profile.upsert({
+        where: { userId },
+        create: { userId, displayName: "Amina Admin" },
+        update: {},
+      });
+    } catch (error) {
+      console.warn("Profile/preferences upsert skipped:", error);
     }
 
     const verify = await prisma.user.findUnique({ where: { email } });
