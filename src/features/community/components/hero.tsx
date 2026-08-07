@@ -31,17 +31,17 @@ export default function CommunityHero() {
                 Discover authentic stories, join local meetups, and build your own travel reputation in a community of curious explorers.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-                <Link
-                  href={ROUTES.register}
+                <a
+                  href="#browse-stories"
                   className="inline-flex items-center justify-center rounded-full bg-[#2563EB] px-8 py-4 text-sm font-semibold text-white shadow-lg transition duration-300 hover:bg-[#1D4ED8]"
                 >
-                  Join the community
-                </Link>
+                  Browse stories
+                </a>
                 <Link
-                  href={ROUTES.guides}
+                  href={ROUTES.register}
                   className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-8 py-4 text-sm font-semibold text-white transition duration-300 hover:bg-white/20"
                 >
-                  Read travel stories
+                  Join the community
                 </Link>
               </div>
             </div>

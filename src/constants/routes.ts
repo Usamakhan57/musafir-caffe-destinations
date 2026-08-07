@@ -62,3 +62,13 @@ export function guideRoute(slug: string): string {
 export function guideAuthorRoute(slug: string): string {
   return `${ROUTES.guides}/authors/${slug}`;
 }
+
+/** Detail route for a community travel story. */
+export function communityStoryRoute(slug: string): string {
+  return `${ROUTES.community}/stories/${slug}`;
+}
+
+/** Public traveler profile in the community. */
+export function communityTravelerRoute(slug: string): string {
+  return `${ROUTES.community}/travelers/${slug}`;
+}
