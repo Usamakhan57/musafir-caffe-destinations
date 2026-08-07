@@ -86,10 +86,10 @@ function YouTubeIcon() {
 }
 
 const socialLinks = [
-  { label: "Facebook", href: siteConfig.links.facebook, icon: FacebookIcon },
-  { label: "Instagram", href: siteConfig.links.instagram, icon: InstagramIcon },
-  { label: "X", href: siteConfig.links.x, icon: XIcon },
-  { label: "YouTube", href: siteConfig.links.youtube, icon: YouTubeIcon },
+  { label: "Facebook", href: socialUrls.facebook, icon: FacebookIcon },
+  { label: "Instagram", href: socialUrls.instagram, icon: InstagramIcon },
+  { label: "X", href: socialUrls.x, icon: XIcon },
+  { label: "YouTube", href: socialUrls.youtube, icon: YouTubeIcon },
 ] as const;
 
 export function Footer() {
