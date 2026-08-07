@@ -41,6 +41,26 @@ import {
 
 const log = logger.child("auth:actions");
 
+const STAFF_ROLES = new Set(["admin", "editor", "moderator"]);
+
+function isNextRedirectError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    (error as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
+function loginFailedResult(detail?: string): ActionResult {
+  if (detail) log.warn("Login failed", { detail });
+  return {
+    success: false,
+    message: "Invalid email or password.",
+  };
+}
+
 // ── Login ─────────────────────────────────────────────────────
 
 export async function loginAction(
@@ -70,32 +90,45 @@ export async function loginAction(
     };
   }
 
-  try {
-    const result = await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      remember: parsed.data.remember,
-      redirect: false,
-    });
+  const email = parsed.data.email.toLowerCase().trim();
+  const password = parsed.data.password;
+  const remember = parsed.data.remember === true ? "true" : "false";
 
-    if (result && typeof result === "object" && "error" in result && result.error) {
-      return {
-        success: false,
-        message: "Invalid email or password.",
-      };
+  // Resolve post-login destination from the same Prisma DB Auth.js uses.
+  let redirectTo = "/profile";
+  try {
+    const existing = await findUserByEmail(email);
+    if (existing && STAFF_ROLES.has(existing.role)) {
+      redirectTo = "/admin";
     }
   } catch (error) {
+    log.warn("Pre-login user lookup failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  try {
+    // Auth.js v5 server signIn with redirectTo throws NEXT_REDIRECT on success.
+    // On credentials failure it throws AuthError (CredentialsSignin).
+    await signIn("credentials", {
+      email,
+      password,
+      remember,
+      redirectTo,
+    });
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
     if (error instanceof AuthError) {
-      log.warn("Login failed", { type: error.type });
-      return {
-        success: false,
-        message: "Invalid email or password.",
-      };
+      log.warn("Login failed", { type: error.type, email });
+      return loginFailedResult(error.type);
     }
     throw error;
   }
 
-  redirect("/profile");
+  // Fallback if Auth.js returned without throwing a redirect.
+  redirect(redirectTo);
 }
 
 // ── Register ──────────────────────────────────────────────────

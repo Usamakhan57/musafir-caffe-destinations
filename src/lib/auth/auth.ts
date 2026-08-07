@@ -11,6 +11,7 @@ import {
   findUserById,
 } from "@/features/auth/data/user-store";
 import { ensureBootstrapAdmin, BOOTSTRAP_ADMIN_EMAIL } from "@/features/auth/data/ensure-admin";
+import { recordAuthDeny } from "@/features/auth/data/auth-audit";
 import type { UserRole, UserPreferences } from "@/features/auth/types";
 
 interface AuthUserWithPreferences {
@@ -100,30 +101,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password;
 
         if (typeof email !== "string" || typeof password !== "string") {
+          recordAuthDeny("", "missing_credentials");
           return null;
         }
+
+        const normalizedEmail = email.toLowerCase().trim();
 
         try {
           // Heal production bootstrap admin if seed never ran or password is missing.
           // Force on the bootstrap email so an empty/wrong hash is repaired even when
           // an earlier in-process ensure cached a stale "unchanged" result.
-          const normalizedEmail = email.toLowerCase().trim();
           await ensureBootstrapAdmin({
             force: normalizedEmail === BOOTSTRAP_ADMIN_EMAIL,
           });
 
           let user = await findUserByEmail(normalizedEmail);
-          if (!user) return null;
-          if (!user.password) return null;
+          if (!user) {
+            recordAuthDeny(normalizedEmail, "user_not_found");
+            return null;
+          }
+          if (!user.password) {
+            recordAuthDeny(normalizedEmail, "password_empty");
+            return null;
+          }
 
           let valid = await verifyPassword(password, user.password);
           if (!valid && normalizedEmail === BOOTSTRAP_ADMIN_EMAIL) {
             await ensureBootstrapAdmin({ force: true });
             user = await findUserByEmail(normalizedEmail);
-            if (!user?.password) return null;
+            if (!user?.password) {
+              recordAuthDeny(normalizedEmail, "password_empty", "after bootstrap repair");
+              return null;
+            }
             valid = await verifyPassword(password, user.password);
           }
-          if (!valid) return null;
+          if (!valid) {
+            recordAuthDeny(normalizedEmail, "password_mismatch");
+            return null;
+          }
 
           return {
             id: user.id,
@@ -135,6 +150,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               credentials?.remember === "on" || credentials?.remember === "true",
           };
         } catch (error) {
+          recordAuthDeny(
+            normalizedEmail,
+            "authorize_exception",
+            error instanceof Error ? error.message : String(error),
+          );
           console.error("[auth] credentials authorize failed:", error);
           return null;
         }
