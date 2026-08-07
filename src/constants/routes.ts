@@ -39,6 +39,10 @@ export const ROUTES = {
   travelTips: "/travel-tips",
   digitalNomads: "/digital-nomads",
   help: "/help",
+  planner: "/planner",
+  search: "/search",
+  maps: "/maps",
+  budget: "/budget",
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
