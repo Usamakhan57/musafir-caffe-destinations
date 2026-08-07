@@ -7,5 +7,6 @@ export {
   guideAuthorRoute,
   communityStoryRoute,
   communityTravelerRoute,
+  helpArticleRoute,
 } from "./routes";
 export type { RoutePath } from "./routes";

@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/shared/ui";
+import { ReviewForm } from "@/features/reviews";
 
 import type { Review } from "../types";
 import { RatingStars } from "./rating-stars";
@@ -7,6 +8,8 @@ interface ReviewsSectionProps {
   reviews: readonly Review[];
   rating: number;
   reviewCount: number;
+  targetId: string;
+  targetName: string;
 }
 
 function formatDate(iso: string): string {
@@ -16,8 +19,26 @@ function formatDate(iso: string): string {
   });
 }
 
-export function ReviewsSection({ reviews, rating, reviewCount }: ReviewsSectionProps) {
-  if (reviews.length === 0) return null;
+export function ReviewsSection({
+  reviews,
+  rating,
+  reviewCount,
+  targetId,
+  targetName,
+}: ReviewsSectionProps) {
+  if (reviews.length === 0) {
+    return (
+      <section aria-labelledby="reviews-heading">
+        <SectionHeading
+          id="reviews-heading"
+          eyebrow="Reviews"
+          title="Be the first to review"
+          align="left"
+        />
+        <ReviewForm targetType="destination" targetId={targetId} targetName={targetName} />
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="reviews-heading">
@@ -52,6 +73,8 @@ export function ReviewsSection({ reviews, rating, reviewCount }: ReviewsSectionP
           </li>
         ))}
       </ul>
+
+      <ReviewForm targetType="destination" targetId={targetId} targetName={targetName} />
     </section>
   );
 }

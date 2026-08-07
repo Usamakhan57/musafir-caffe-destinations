@@ -1,16 +1,44 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 export function ContactForm() {
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-  };
+    setStatus("sending");
+    setMessage(null);
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      name: String(form.get("name") ?? ""),
+      email: String(form.get("email") ?? ""),
+      message: String(form.get("message") ?? ""),
+    };
+
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setStatus("error");
+      setMessage(body.error ?? "Could not send message");
+      return;
+    }
+
+    setStatus("done");
+    setMessage("Message sent — check your inbox for a confirmation.");
+    event.currentTarget.reset();
+  }
 
   return (
     <form
       className="mt-12 rounded-[24px] border border-[#E5E7EB] bg-[#FAFAF9] p-6 sm:p-8"
-      onSubmit={handleSubmit}
+      onSubmit={(e) => void handleSubmit(e)}
       aria-label="Contact form"
     >
       <div className="grid gap-5 sm:grid-cols-2">
@@ -19,6 +47,7 @@ export function ContactForm() {
           <input
             name="name"
             required
+            minLength={2}
             className="mt-2 h-12 w-full rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
             placeholder="Your name"
           />
@@ -39,6 +68,7 @@ export function ContactForm() {
         <textarea
           name="message"
           required
+          minLength={10}
           rows={5}
           className="mt-2 w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
           placeholder="Tell us how we can help…"
@@ -46,20 +76,30 @@ export function ContactForm() {
       </label>
       <button
         type="submit"
-        className="mt-6 inline-flex h-12 items-center justify-center rounded-[18px] bg-gradient-to-r from-[#5C4033] via-[#6F4E37] to-[#8B6914] px-6 text-sm font-semibold text-white transition hover:brightness-110"
+        disabled={status === "sending"}
+        className="mt-6 inline-flex h-12 items-center justify-center rounded-[18px] bg-gradient-to-r from-[#5C4033] via-[#6F4E37] to-[#8B6914] px-6 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
       >
-        Send message
+        {status === "sending" ? "Sending…" : "Send message"}
       </button>
-      <p className="mt-3 text-xs text-[#6B7280]">
-        This demo form does not send email yet. For now, reach us at{" "}
-        <a
-          href="mailto:hello@musafircaffe.com"
-          className="font-medium text-[#0F766E] underline-offset-2 hover:underline"
+      {message ? (
+        <p
+          className={`mt-3 text-sm ${status === "error" ? "text-rose-700" : "text-[#0F766E]"}`}
+          role="status"
         >
-          hello@musafircaffe.com
-        </a>
-        .
-      </p>
+          {message}
+        </p>
+      ) : (
+        <p className="mt-3 text-xs text-[#6B7280]">
+          Messages are queued through our email template layer. You can also reach{" "}
+          <a
+            href="mailto:hello@musafircaffe.com"
+            className="font-medium text-[#0F766E] underline-offset-2 hover:underline"
+          >
+            hello@musafircaffe.com
+          </a>
+          .
+        </p>
+      )}
     </form>
   );
 }

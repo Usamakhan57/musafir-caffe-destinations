@@ -3,6 +3,13 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
+import { env } from "@/config";
+import {
+  resetPasswordEmail,
+  sendEmail,
+  verifyEmailTemplate,
+  welcomeEmail,
+} from "@/features/email";
 import { signIn, signOut } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import type { ActionResult } from "../types";
@@ -141,11 +148,17 @@ export async function registerAction(
     return { success: false, message: "Something went wrong. Please try again." };
   }
 
-  // Generate verification token (in production, send via email)
   const user = await findUserByEmail(parsed.data.email);
   if (user) {
     const token = await createVerifyToken(parsed.data.email);
-    log.info("Verification token created (dev)", { token, email: parsed.data.email });
+    const verifyUrl = `${env.appUrl}/verify-email?token=${encodeURIComponent(token)}`;
+    const mail = verifyEmailTemplate(user.name, verifyUrl);
+    mail.to = user.email;
+    await sendEmail(mail);
+    const welcome = welcomeEmail(user.name);
+    welcome.to = user.email;
+    await sendEmail(welcome);
+    log.info("Verification + welcome emails queued", { email: parsed.data.email });
   }
 
   // Auto sign-in after registration
@@ -163,7 +176,7 @@ export async function registerAction(
     throw error;
   }
 
-  redirect("/dashboardrd");
+  redirect("/dashboard");
 }
 
 // ── Forgot Password ──────────────────────────────────────────
@@ -186,8 +199,11 @@ export async function forgotPasswordAction(
   const user = await findUserByEmail(parsed.data.email);
   if (user) {
     const token = await createResetToken(parsed.data.email);
-    // In production, send this token via email
-    log.info("Reset token created (dev)", { token, email: parsed.data.email });
+    const resetUrl = `${env.appUrl}/reset-password?token=${encodeURIComponent(token)}`;
+    const mail = resetPasswordEmail(user.name, resetUrl);
+    mail.to = user.email;
+    await sendEmail(mail);
+    log.info("Password reset email queued", { email: parsed.data.email });
   }
 
   // Always return success to prevent email enumeration

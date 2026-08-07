@@ -24,10 +24,21 @@ const footerSections = [
     ],
   },
   {
+    title: "Travel & shop",
+    links: [
+      { label: "Hotels", href: ROUTES.hotels },
+      { label: "Flights", href: ROUTES.flights },
+      { label: "Tours", href: ROUTES.tours },
+      { label: "Coffee Gear", href: ROUTES.gear },
+      { label: "Membership", href: ROUTES.membership },
+    ],
+  },
+  {
     title: "Company",
     links: [
       { label: "About Us", href: ROUTES.about },
       { label: "Contact", href: ROUTES.contact },
+      { label: "Affiliate", href: ROUTES.affiliate },
       { label: "Careers", href: ROUTES.careers },
       { label: "Press", href: ROUTES.press },
     ],
@@ -36,17 +47,9 @@ const footerSections = [
     title: "Resources",
     links: [
       { label: "Travel Tips", href: ROUTES.travelTips },
-      { label: "Digital Nomads", href: ROUTES.digitalNomads },
       { label: "FAQ", href: ROUTES.faq },
       { label: "Help Center", href: ROUTES.help },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy Policy", href: ROUTES.privacy },
-      { label: "Terms", href: ROUTES.terms },
-      { label: "Cookies", href: ROUTES.cookies },
+      { label: "Offline", href: ROUTES.offline },
     ],
   },
 ] as const;
@@ -195,7 +198,17 @@ export function Footer() {
           <p>
             &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </p>
-          <p>Crafted for travelers, café lovers, and digital nomads.</p>
+          <nav aria-label="Legal" className="flex flex-wrap gap-4">
+            <Link href={ROUTES.privacy} className="hover:text-white">
+              Privacy
+            </Link>
+            <Link href={ROUTES.terms} className="hover:text-white">
+              Terms
+            </Link>
+            <Link href={ROUTES.cookies} className="hover:text-white">
+              Cookies
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

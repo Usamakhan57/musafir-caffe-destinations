@@ -190,3 +190,53 @@ model MediaAsset {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+/// Contact form inbox — email-template ready.
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// In-app notification feed (push/email adapters plug in later).
+model AppNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  kind      String
+  title     String
+  message   String
+  href      String?
+  unread    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, unread])
+}
+
+/// Payment-ready intent ledger (Stripe-shaped).
+model PaymentIntentRecord {
+  id           String   @id @default(uuid())
+  providerId   String   @unique
+  userId       String?
+  amount       Int
+  currency     String   @default("usd")
+  status       String
+  description  String
+  clientSecret String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Affiliate click attribution.
+model AffiliateClick {
+  id        String   @id @default(uuid())
+  partnerId String
+  offerId   String
+  createdAt DateTime @default(now())
+
+  @@index([partnerId, createdAt])
+}

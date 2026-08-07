@@ -43,7 +43,19 @@ export const ROUTES = {
   search: "/search",
   maps: "/maps",
   budget: "/budget",
+  hotels: "/hotels",
+  flights: "/flights",
+  tours: "/tours",
+  gear: "/gear",
+  membership: "/membership",
+  affiliate: "/affiliate",
+  offline: "/offline",
 } as const;
+
+/** Help Center article route. */
+export function helpArticleRoute(slug: string): string {
+  return `${ROUTES.help}/${slug}`;
+}
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
 

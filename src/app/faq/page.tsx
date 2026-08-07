@@ -2,12 +2,14 @@ import Link from "next/link";
 
 import { ROUTES } from "@/constants";
 import { ContentCta, MarketingHero, ProseSection } from "@/shared/components";
+import { JsonLd } from "@/shared/components/json-ld";
 import { createPageMetadata } from "@/shared/lib/seo";
+import { faqPageJsonLd } from "@/shared/lib/structured-data";
 
 export const metadata = createPageMetadata({
   title: "FAQ",
   description:
-    "Answers to common questions about MusafirCaffe — accounts, destinations, cafés, guides, and community features.",
+    "Answers to common questions about MusafirCaffe — accounts, destinations, cafés, guides, membership, and community features.",
   path: ROUTES.faq,
 });
 
@@ -18,33 +20,34 @@ const faqs = [
   },
   {
     q: "Is MusafirCaffe free to use?",
-    a: "Browsing destinations, cafés, and guides is free. Creating an account unlocks wishlist, trip planning, and community features. Join Free to get started.",
+    a: "Browsing destinations, cafés, and guides is free. Creating an account unlocks wishlist, trip planning, and community features. Premium Nomad and Connoisseur plans add offline packs and planner priority.",
   },
   {
-    q: "How do I find cafés with reliable wifi?",
-    a: "Open Cafés and filter for work-friendly spaces, or explore Digital Nomads for city tips on cafés that welcome longer stays.",
+    q: "How do reviews and ratings work?",
+    a: "Travelers can submit reviews on destination and café pages. Submissions are moderated before publishing. Star ratings remain accessible with clear labels.",
   },
   {
-    q: "Can I contribute a guide or café tip?",
-    a: "Yes. Join the Community, share stories, and contact us if you’d like to collaborate on a destination guide.",
+    q: "Do you book hotels, flights, tours, or gear?",
+    a: "We surface partner offers with disclosed affiliate links for hotels, flights, tours, and coffee gear. Editorial café and destination rankings stay independent.",
   },
   {
     q: "How do I reset my password?",
-    a: "Use Forgot Password on the Sign In page. You’ll receive a secure link to set a new password.",
+    a: "Use Forgot Password on the Sign In page. You’ll receive a secure email template link to set a new password.",
   },
   {
     q: "Where can I get more help?",
-    a: "Visit the Help Center for step-by-step articles, or Contact us if you need a human reply.",
+    a: "Visit the Help Center for step-by-step articles, install the PWA for offline support, or Contact us if you need a human reply.",
   },
 ] as const;
 
 export default function FaqPage() {
   return (
     <main className="flex flex-1 flex-col">
+      <JsonLd data={faqPageJsonLd(faqs)} />
       <MarketingHero
         eyebrow="FAQ"
         title="Questions travelers ask before the next cup."
-        description="Straight answers about browsing, accounts, and how MusafirCaffe helps you explore coffee cities with confidence."
+        description="Straight answers about browsing, accounts, membership, and how MusafirCaffe helps you explore coffee cities with confidence."
         breadcrumbs={[{ label: "FAQ" }]}
       />
 

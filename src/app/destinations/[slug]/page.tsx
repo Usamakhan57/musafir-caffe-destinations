@@ -159,6 +159,8 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
             reviews={destination.reviews}
             rating={destination.rating}
             reviewCount={destination.reviewCount}
+            targetId={destination.slug}
+            targetName={destination.name}
           />
           <NearbyDestinationsSection destinations={nearby} />
           <DetailCta destinationName={destination.name} />

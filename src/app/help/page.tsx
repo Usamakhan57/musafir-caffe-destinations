@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { BookOpen, LifeBuoy, Lock, UserRound } from "lucide-react";
+import {
+  BookOpen,
+  LifeBuoy,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 
-import { ROUTES } from "@/constants";
+import { ROUTES, helpArticleRoute } from "@/constants";
+import { helpArticles } from "@/features/content/help-articles";
 import {
   ContentCard,
   ContentCta,
@@ -14,7 +22,7 @@ import { createPageMetadata } from "@/shared/lib/seo";
 export const metadata = createPageMetadata({
   title: "Help Center",
   description:
-    "Get help with MusafirCaffe accounts, browsing destinations and cafés, community features, and trip planning tools.",
+    "Get help with MusafirCaffe accounts, browsing destinations and cafés, community features, membership, and trip planning tools.",
   path: ROUTES.help,
 });
 
@@ -24,7 +32,7 @@ export default function HelpCenterPage() {
       <MarketingHero
         eyebrow="Support"
         title="Help Center"
-        description="Guides for getting started, managing your account, and making the most of destinations, cafés, and community tools."
+        description="Guides for getting started, managing your account, membership, offline/PWA, and production quality audits."
         breadcrumbs={[{ label: "Help Center" }]}
         actions={
           <Link
@@ -39,14 +47,14 @@ export default function HelpCenterPage() {
       <ProseSection
         eyebrow="Topics"
         title="Popular help articles"
-        description="Start here — most traveler questions live in these four areas."
+        description="Start here — accounts, travel tools, billing, and quality notes."
       >
         <ContentGrid columns={2}>
           <ContentCard
             icon={<UserRound className="h-5 w-5" aria-hidden />}
             title="Account & profile"
             description="Create an account, update your profile, and manage notification preferences from the dashboard."
-            href={ROUTES.register}
+            href={helpArticleRoute("getting-started")}
           />
           <ContentCard
             icon={<Lock className="h-5 w-5" aria-hidden />}
@@ -56,9 +64,21 @@ export default function HelpCenterPage() {
           />
           <ContentCard
             icon={<BookOpen className="h-5 w-5" aria-hidden />}
-            title="Using guides & destinations"
-            description="Search cities, filter cafés, and follow curated guides for itineraries that respect local pace."
-            href={ROUTES.guides}
+            title="Reviews & ratings"
+            description="Submit reviews, understand moderation, and how ratings appear on destinations and cafés."
+            href={helpArticleRoute("reviews-and-ratings")}
+          />
+          <ContentCard
+            icon={<Sparkles className="h-5 w-5" aria-hidden />}
+            title="Membership & billing"
+            description="Compare plans and use payment-ready checkout for Nomad and Connoisseur."
+            href={helpArticleRoute("membership-billing")}
+          />
+          <ContentCard
+            icon={<ShieldCheck className="h-5 w-5" aria-hidden />}
+            title="Security & quality audits"
+            description="Accessibility, SEO, performance, Lighthouse, and security review notes."
+            href={helpArticleRoute("security-review")}
           />
           <ContentCard
             icon={<LifeBuoy className="h-5 w-5" aria-hidden />}
@@ -66,6 +86,19 @@ export default function HelpCenterPage() {
             description="Quick answers about pricing, community contributions, and how MusafirCaffe works."
             href={ROUTES.faq}
           />
+        </ContentGrid>
+      </ProseSection>
+
+      <ProseSection eyebrow="Library" title="All articles">
+        <ContentGrid columns={2}>
+          {helpArticles.map((article) => (
+            <ContentCard
+              key={article.slug}
+              title={article.title}
+              description={article.summary}
+              href={helpArticleRoute(article.slug)}
+            />
+          ))}
         </ContentGrid>
       </ProseSection>
 
