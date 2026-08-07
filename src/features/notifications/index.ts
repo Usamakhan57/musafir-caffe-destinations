@@ -1,6 +1,2 @@
-export {
-  listNotifications,
-  createNotification,
-  markNotificationsRead,
-} from "./store";
-export type { AppNotification, NotificationKind } from "./store";
+/** Server-only notification accessors — import from `./store` in route handlers. */
+export type { AppNotification, NotificationKind } from "./types";

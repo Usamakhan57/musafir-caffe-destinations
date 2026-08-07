@@ -1,52 +1,86 @@
-import { z } from "zod";
+import "server-only";
 
-export const publicReviewSchema = z.object({
-  targetType: z.enum(["destination", "cafe", "guide", "tour", "hotel", "gear"]),
-  targetId: z.string().min(1),
-  targetName: z.string().min(2).max(160),
-  rating: z.coerce.number().int().min(1).max(5),
-  title: z.string().min(2).max(120).optional().default(""),
-  body: z.string().min(8).max(2000),
-  authorName: z.string().min(2).max(80),
-  authorEmail: z.string().email().optional(),
-});
+import { createReviewRecord, listReviews } from "@/server/db";
 
-export type PublicReviewInput = z.infer<typeof publicReviewSchema>;
+import type { PublicReviewInput, PublicReviewRecord } from "./schemas";
 
-export interface PublicReviewRecord extends PublicReviewInput {
-  id: string;
-  status: "pending" | "published" | "rejected";
-  createdAt: string;
-}
+export type { PublicReviewInput, PublicReviewRecord } from "./schemas";
+export { publicReviewSchema } from "./schemas";
 
-const reviews: PublicReviewRecord[] = [];
+const fallback: PublicReviewRecord[] = [];
 
-export function createPublicReview(input: PublicReviewInput): PublicReviewRecord {
+export async function createPublicReview(
+  input: PublicReviewInput,
+): Promise<PublicReviewRecord> {
+  const row = await createReviewRecord({
+    targetType: input.targetType,
+    targetId: input.targetId,
+    targetName: input.targetName,
+    rating: input.rating,
+    title: input.title,
+    body: input.body,
+    photos: input.photos,
+    authorName: input.authorName,
+    authorEmail: input.authorEmail,
+    status: "draft",
+  });
+
+  if (row) {
+    return {
+      ...input,
+      id: row.id,
+      status: "pending",
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
   const record: PublicReviewRecord = {
     ...input,
     id: crypto.randomUUID(),
     status: "pending",
     createdAt: new Date().toISOString(),
   };
-  reviews.unshift(record);
+  fallback.unshift(record);
   return record;
 }
 
-export function listPublicReviews(targetType?: string, targetId?: string) {
-  return reviews.filter((review) => {
+export async function listPublicReviews(targetType?: string, targetId?: string) {
+  const rows = await listReviews({
+    targetType,
+    targetId,
+  });
+  if (rows) {
+    return rows.map((row) => ({
+      id: row.id,
+      targetType: row.targetType as PublicReviewInput["targetType"],
+      targetId: row.targetId,
+      targetName: row.targetName,
+      rating: row.rating,
+      title: row.title ?? "",
+      body: row.body,
+      authorName: row.authorName,
+      authorEmail: row.authorEmail ?? undefined,
+      photos: row.photos,
+      status:
+        row.status === "draft"
+          ? ("pending" as const)
+          : row.status === "published"
+            ? ("published" as const)
+            : ("rejected" as const),
+      createdAt: row.createdAt.toISOString(),
+    }));
+  }
+
+  return fallback.filter((review) => {
     if (targetType && review.targetType !== targetType) return false;
     if (targetId && review.targetId !== targetId) return false;
     return true;
   });
 }
 
-export function averageRating(targetType: string, targetId: string) {
-  const published = reviews.filter(
-    (r) =>
-      r.targetType === targetType &&
-      r.targetId === targetId &&
-      r.status === "published",
-  );
+export async function averageRating(targetType: string, targetId: string) {
+  const items = await listPublicReviews(targetType, targetId);
+  const published = items.filter((r) => r.status === "published");
   if (published.length === 0) return null;
   const sum = published.reduce((acc, r) => acc + r.rating, 0);
   return { average: sum / published.length, count: published.length };

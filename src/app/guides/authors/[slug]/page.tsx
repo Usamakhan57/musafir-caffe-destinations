@@ -3,19 +3,20 @@ import { notFound } from "next/navigation";
 
 import { siteConfig } from "@/config";
 import { guideAuthorRoute } from "@/constants";
+import { AuthorProfile } from "@/features/guides";
 import {
-  AuthorProfile,
   getAllAuthors,
   getAuthorBySlug,
   getGuidesByAuthor,
-} from "@/features/guides";
+} from "@/features/guides/data/guides-loader";
 
 interface AuthorPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export function generateStaticParams() {
-  return getAllAuthors().map((author) => ({ slug: author.slug }));
+export async function generateStaticParams() {
+  const authors = await getAllAuthors();
+  return authors.map((author) => ({ slug: author.slug }));
 }
 
 export async function generateMetadata({ params }: AuthorPageProps): Promise<Metadata> {

@@ -5,7 +5,7 @@ import {
   createPaymentIntentDraft,
   membershipPlans,
 } from "@/features/monetization";
-import { createNotification } from "@/features/notifications";
+import { createNotification } from "@/features/notifications/store";
 import { auth } from "@/lib/auth";
 
 const checkoutSchema = z.object({
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     description: `${plan.name} membership (${parsed.data.interval})`,
   });
 
-  createNotification({
+  await createNotification({
     userId: session.user.id ?? "demo",
     kind: "membership",
     title: "Checkout started",

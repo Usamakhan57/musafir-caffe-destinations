@@ -1,6 +1,6 @@
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
-import { getAuthorForGuide, getLatestGuides } from "../data/guides-store";
+import { getAuthorForGuide, getLatestGuides } from "../data/guides-loader";
 import GuideCard from "./guide-card";
 
 export default async function LatestGuides() {

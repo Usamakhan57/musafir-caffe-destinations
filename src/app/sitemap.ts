@@ -3,9 +3,9 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config";
 import { ROUTES } from "@/constants";
 import { getHelpArticleSlugs } from "@/features/content/help-articles";
-import { getCafeSlugs } from "@/features/cafes";
-import { getDestinationSlugs } from "@/features/destinations";
-import { getGuideSlugs } from "@/features/guides";
+import { getCafeSlugs } from "@/features/cafes/data/cafes-loader";
+import { getDestinationSlugs } from "@/features/destinations/data/destinations-loader";
+import { getGuideSlugs } from "@/features/guides/data/guides-loader";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;

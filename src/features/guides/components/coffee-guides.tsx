@@ -1,6 +1,6 @@
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
-import { getAllGuides, getAuthorForGuide } from "../data/guides-store";
+import { getAllGuides, getAuthorForGuide } from "../data/guides-loader";
 import GuideCard from "./guide-card";
 
 export default async function CoffeeGuides() {

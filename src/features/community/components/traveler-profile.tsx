@@ -3,8 +3,8 @@ import Link from "next/link";
 import { BadgeCheck, Globe, Sparkles } from "lucide-react";
 
 import { cafeRoute, communityStoryRoute, destinationRoute, ROUTES } from "@/constants";
-import { getCafeBySlug } from "@/features/cafes";
-import { getDestinationBySlug } from "@/features/destinations";
+import { getCafeBySlug } from "@/features/cafes/data/cafes-loader";
+import { getDestinationBySlug } from "@/features/destinations/data/destinations-loader";
 import { Breadcrumbs } from "@/shared/components";
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
@@ -13,7 +13,7 @@ import {
   getStoriesBySlugs,
   getTravelerBySlug,
   getTravelerForStory,
-} from "../data/community-store";
+} from "../data/community-loader";
 import StoryCard from "./story-card";
 import { TravelerFollowButton } from "./traveler-card";
 

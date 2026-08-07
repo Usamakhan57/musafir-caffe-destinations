@@ -1,11 +1,17 @@
 /**
- * Prisma/Supabase seed entrypoint for the Admin CMS.
- *
- * Uses the in-memory CMS seed payload as the canonical bootstrap dataset.
- * When DATABASE_URL is configured, records are upserted into Postgres.
- * Without a database, the script still validates and prints the seed summary.
+ * Production seed — upserts catalogs, CMS, monetization, and help content.
+ * Run: npm run db:seed
  */
 import { getCmsSeedPayload } from "../src/features/admin/data/cms-store";
+import { helpArticles } from "../src/features/content/help-articles";
+import {
+  affiliatePartners,
+  flightOffers,
+  gearOffers,
+  hotelOffers,
+  membershipPlans,
+  tourOffers,
+} from "../src/features/monetization/data";
 
 type SeedRole =
   | "traveler"
@@ -32,39 +38,239 @@ function mapRole(role: string): SeedRole {
   }
 }
 
+
+function buildSearchText(parts: Array<string | null | undefined>) {
+  return parts
+    .filter((part): part is string => Boolean(part && String(part).trim()))
+    .join(" ")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Minimal structural client used by seed helpers (avoids coupling to generated types).
+type SeedPrisma = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  destination: { upsert: (args: any) => Promise<unknown> };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cafe: { upsert: (args: any) => Promise<unknown> };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  guide: { upsert: (args: any) => Promise<unknown> };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  communityPost: { upsert: (args: any) => Promise<unknown> };
+};
+
+async function upsertDestination(client: SeedPrisma, payload: Record<string, unknown>) {
+  const slug = String(payload.slug);
+  const name = String(payload.name);
+  const countryName = String(payload.country ?? "");
+  const cityName = String(payload.city ?? payload.name ?? "");
+  const summary = String(payload.tagline ?? payload.description ?? "").slice(0, 500);
+  const description = String(payload.description ?? "");
+  const searchText = buildSearchText([
+    name,
+    cityName,
+    countryName,
+    summary,
+    description,
+    ...(Array.isArray(payload.tags) ? (payload.tags as string[]) : []),
+  ]);
+  return client.destination.upsert({
+    where: { slug },
+    create: {
+      slug,
+      name,
+      countryName,
+      cityName,
+      region: typeof payload.region === "string" ? payload.region : null,
+      summary,
+      description,
+      heroImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      coverImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      status: "published",
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+    update: {
+      name,
+      countryName,
+      cityName,
+      region: typeof payload.region === "string" ? payload.region : null,
+      summary,
+      description,
+      heroImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      coverImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+  });
+}
+
+async function upsertCafe(client: SeedPrisma, payload: Record<string, unknown>) {
+  const slug = String(payload.slug);
+  const name = String(payload.name);
+  const countryName = String(payload.country ?? "");
+  const cityName = String(payload.city ?? "");
+  const summary = String(payload.tagline ?? payload.description ?? "").slice(0, 500);
+  const description = String(payload.description ?? "");
+  const amenities = Array.isArray(payload.amenities) ? (payload.amenities as string[]) : [];
+  const searchText = buildSearchText([name, cityName, countryName, summary, description, ...amenities]);
+  return client.cafe.upsert({
+    where: { slug },
+    create: {
+      slug,
+      name,
+      countryName,
+      cityName,
+      summary,
+      description,
+      heroImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      coverImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      status: "published",
+      amenities,
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+    update: {
+      name,
+      countryName,
+      cityName,
+      summary,
+      description,
+      heroImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      coverImage: typeof payload.heroImage === "string" ? payload.heroImage : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      amenities,
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+  });
+}
+
+async function upsertGuide(client: SeedPrisma, payload: Record<string, unknown>) {
+  const slug = String(payload.slug);
+  const title = String(payload.title);
+  const authorName = String(
+    (payload.author as { name?: string } | undefined)?.name ?? payload.authorName ?? "Editor",
+  );
+  const excerpt = String(payload.excerpt ?? payload.summary ?? "");
+  const searchText = buildSearchText([title, authorName, excerpt, String(payload.body ?? "")]);
+  return client.guide.upsert({
+    where: { slug },
+    create: {
+      slug,
+      title,
+      excerpt,
+      body: typeof payload.body === "string" ? payload.body : "",
+      authorName,
+      coverImage:
+        typeof payload.coverImage === "string"
+          ? payload.coverImage
+          : typeof payload.heroImage === "string"
+            ? payload.heroImage
+            : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      status: "published",
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+    update: {
+      title,
+      excerpt,
+      body: typeof payload.body === "string" ? payload.body : "",
+      authorName,
+      coverImage:
+        typeof payload.coverImage === "string"
+          ? payload.coverImage
+          : typeof payload.heroImage === "string"
+            ? payload.heroImage
+            : null,
+      rating: Number(payload.rating ?? 0),
+      reviewCount: Number(payload.reviewCount ?? 0),
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+  });
+}
+
+async function upsertCommunity(client: SeedPrisma, payload: Record<string, unknown>) {
+  const slug = String(payload.slug);
+  const title = String(payload.title);
+  const authorName = String(payload.authorName ?? payload.authorSlug ?? "Traveler");
+  const excerpt = String(payload.excerpt ?? "").slice(0, 500);
+  const body = Array.isArray(payload.body)
+    ? (payload.body as string[]).join("\n\n")
+    : String(payload.body ?? "");
+  const searchText = buildSearchText([title, authorName, excerpt, body]);
+  return client.communityPost.upsert({
+    where: { slug },
+    create: {
+      slug,
+      title,
+      body,
+      excerpt,
+      authorName,
+      coverImage: typeof payload.coverImage === "string" ? payload.coverImage : typeof payload.heroImage === "string" ? payload.heroImage : null,
+      status: "published",
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+    update: {
+      title,
+      body,
+      excerpt,
+      authorName,
+      coverImage: typeof payload.coverImage === "string" ? payload.coverImage : typeof payload.heroImage === "string" ? payload.heroImage : null,
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
+      searchText,
+      payload,
+    },
+  });
+}
+
+
 async function main() {
-  const payload = getCmsSeedPayload();
-  const summary = {
-    users: payload.users.length,
-    categories: payload.categories.length,
-    tags: payload.tags.length,
-    destinations: payload.destinations.length,
-    cafes: payload.cafes.length,
-    guides: payload.guides.length,
-    community: payload.community.length,
-    reviews: payload.reviews.length,
-    media: payload.media.length,
-  };
-
-  console.log("CMS seed payload ready:", summary);
-
   if (!process.env.DATABASE_URL) {
-    console.log(
-      "DATABASE_URL not set — seed payload validated in-memory only (Supabase-ready).",
-    );
+    console.log("DATABASE_URL not set — aborting seed.");
     return;
   }
 
-  const { PrismaClient } = await import("../src/generated/prisma/client");
   const { PrismaPg } = await import("@prisma/adapter-pg");
-  const { Pool } = await import("pg");
-
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const adapter = new PrismaPg(pool);
+  const { PrismaClient } = await import("../src/generated/prisma/client");
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
 
+  const {
+    getAllDestinations,
+  } = await import("../src/features/destinations/data/destinations-store");
+  const { getAllCafes } = await import("../src/features/cafes/data/cafes-store");
+  const { getAllGuides, getAllAuthors } = await import(
+    "../src/features/guides/data/guides-store"
+  );
+  const { getAllStories, getAllTravelers } = await import(
+    "../src/features/community/data/community-store"
+  );
+  const homeContent = await import("../src/features/home/data/content");
+
   try {
-    for (const user of payload.users) {
+    const cms = getCmsSeedPayload();
+
+    for (const user of cms.users) {
       await prisma.user.upsert({
         where: { email: user.email },
         create: {
@@ -79,12 +285,19 @@ async function main() {
           name: user.name,
           role: mapRole(user.role),
           emailVerified: user.emailVerified,
-          image: user.image ?? null,
         },
+      });
+      await prisma.profile.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          displayName: user.name,
+        },
+        update: { displayName: user.name },
       });
     }
 
-    for (const category of payload.categories) {
+    for (const category of cms.categories) {
       await prisma.category.upsert({
         where: { slug: category.slug },
         create: {
@@ -102,182 +315,215 @@ async function main() {
       });
     }
 
-    for (const tag of payload.tags) {
+    for (const tag of cms.tags) {
       await prisma.tag.upsert({
         where: { slug: tag.slug },
-        create: {
-          id: tag.id,
-          name: tag.name,
-          slug: tag.slug,
-        },
+        create: { id: tag.id, name: tag.name, slug: tag.slug },
         update: { name: tag.name },
       });
     }
 
-    for (const destination of payload.destinations) {
-      await prisma.cmsDestination.upsert({
-        where: { slug: destination.slug },
+    const destinations = getAllDestinations();
+    for (const destination of destinations) {
+      await upsertDestination(prisma as SeedPrisma, destination as unknown as Record<string, unknown>);
+    }
+
+    const cafes = getAllCafes();
+    for (const cafe of cafes) {
+      await upsertCafe(prisma as SeedPrisma, cafe as unknown as Record<string, unknown>);
+      const gallery = cafe.gallery ?? [];
+      const cafeRow = await prisma.cafe.findUnique({ where: { slug: cafe.slug } });
+      if (cafeRow) {
+        await prisma.cafeImage.deleteMany({ where: { cafeId: cafeRow.id } });
+        for (const [index, image] of gallery.entries()) {
+          await prisma.cafeImage.create({
+            data: {
+              cafeId: cafeRow.id,
+              url: image.src,
+              alt: image.alt,
+              sortOrder: index,
+            },
+          });
+        }
+      }
+    }
+
+    for (const author of getAllAuthors()) {
+      await prisma.guideAuthor.upsert({
+        where: { slug: author.slug },
         create: {
-          id: destination.id,
-          title: destination.title,
-          slug: destination.slug,
-          country: destination.country,
-          city: destination.city,
-          summary: destination.summary,
-          status: destination.status,
-          categoryId: destination.categoryId,
-          coverImage: destination.coverImage,
-          tags: destination.tags,
+          slug: author.slug,
+          name: author.name,
+          bio: author.bio,
+          avatarUrl: author.avatar,
+          payload: author as unknown as object,
         },
         update: {
-          title: destination.title,
-          country: destination.country,
-          city: destination.city,
-          summary: destination.summary,
-          status: destination.status,
-          categoryId: destination.categoryId,
-          coverImage: destination.coverImage,
-          tags: destination.tags,
+          name: author.name,
+          bio: author.bio,
+          avatarUrl: author.avatar,
+          payload: author as unknown as object,
         },
       });
     }
 
-    for (const cafe of payload.cafes) {
-      await prisma.cmsCafe.upsert({
-        where: { slug: cafe.slug },
+    const guides = getAllGuides();
+    for (const guide of guides) {
+      await upsertGuide(prisma as SeedPrisma, guide as unknown as Record<string, unknown>);
+    }
+
+    for (const traveler of getAllTravelers()) {
+      await prisma.communityTraveler.upsert({
+        where: { slug: traveler.slug },
         create: {
-          id: cafe.id,
-          name: cafe.name,
-          slug: cafe.slug,
-          city: cafe.city,
-          country: cafe.country,
-          summary: cafe.summary,
-          status: cafe.status,
-          categoryId: cafe.categoryId,
-          coverImage: cafe.coverImage,
-          tags: cafe.tags,
+          slug: traveler.slug,
+          name: traveler.name,
+          bio: traveler.bio,
+          avatarUrl: traveler.avatar,
+          payload: traveler as unknown as object,
         },
         update: {
-          name: cafe.name,
-          city: cafe.city,
-          country: cafe.country,
-          summary: cafe.summary,
-          status: cafe.status,
-          categoryId: cafe.categoryId,
-          coverImage: cafe.coverImage,
-          tags: cafe.tags,
+          name: traveler.name,
+          bio: traveler.bio,
+          avatarUrl: traveler.avatar,
+          payload: traveler as unknown as object,
         },
       });
     }
 
-    for (const guide of payload.guides) {
-      await prisma.cmsGuide.upsert({
-        where: { slug: guide.slug },
+    const stories = getAllStories();
+    for (const story of stories) {
+      await upsertCommunity(prisma as SeedPrisma, story as unknown as Record<string, unknown>);
+    }
+
+    for (const plan of membershipPlans) {
+      await prisma.membershipPlan.upsert({
+        where: { slug: plan.slug },
         create: {
-          id: guide.id,
-          title: guide.title,
-          slug: guide.slug,
-          authorName: guide.authorName,
-          summary: guide.summary,
-          status: guide.status,
-          categoryId: guide.categoryId,
-          coverImage: guide.coverImage,
-          tags: guide.tags,
+          id: plan.id,
+          slug: plan.slug,
+          name: plan.name,
+          description: plan.description,
+          priceMonthly: plan.priceMonthly,
+          priceYearly: plan.priceYearly,
+          features: [...plan.features],
+          highlighted: Boolean(plan.highlighted),
         },
         update: {
-          title: guide.title,
-          authorName: guide.authorName,
-          summary: guide.summary,
-          status: guide.status,
-          categoryId: guide.categoryId,
-          coverImage: guide.coverImage,
-          tags: guide.tags,
+          name: plan.name,
+          description: plan.description,
+          priceMonthly: plan.priceMonthly,
+          priceYearly: plan.priceYearly,
+          features: [...plan.features],
+          highlighted: Boolean(plan.highlighted),
         },
       });
     }
 
-    for (const post of payload.community) {
-      await prisma.cmsCommunityPost.upsert({
-        where: { slug: post.slug },
-        create: {
-          id: post.id,
-          title: post.title,
-          slug: post.slug,
-          authorName: post.authorName,
-          summary: post.summary,
-          status: post.status,
-          categoryId: post.categoryId,
-          coverImage: post.coverImage,
-          tags: post.tags,
-        },
+    for (const partner of affiliatePartners) {
+      await prisma.affiliatePartner.upsert({
+        where: { id: partner.id },
+        create: partner,
         update: {
-          title: post.title,
-          authorName: post.authorName,
-          summary: post.summary,
-          status: post.status,
-          categoryId: post.categoryId,
-          coverImage: post.coverImage,
-          tags: post.tags,
+          name: partner.name,
+          network: partner.network,
+          category: partner.category,
+          commissionLabel: partner.commissionLabel,
+          trackingParam: partner.trackingParam,
         },
       });
     }
 
-    for (const review of payload.reviews) {
-      await prisma.review.upsert({
-        where: { id: review.id },
+    const offers = [...hotelOffers, ...flightOffers, ...tourOffers, ...gearOffers];
+    for (const offer of offers) {
+      await prisma.commerceOffer.upsert({
+        where: { slug: offer.slug },
         create: {
-          id: review.id,
-          targetType: review.targetType,
-          targetId: review.targetId,
-          targetName: review.targetName,
-          rating: review.rating,
-          body: review.body,
-          status: review.status,
-          authorName: review.authorName,
+          id: offer.id,
+          slug: offer.slug,
+          category: offer.category,
+          title: offer.title,
+          summary: offer.summary,
+          location: offer.location,
+          priceFrom: offer.priceFrom,
+          currency: offer.currency,
+          rating: offer.rating,
+          reviewCount: offer.reviewCount,
+          affiliatePartner: offer.affiliatePartner,
+          image: offer.image,
+          featured: Boolean(offer.featured),
+          tags: [...offer.tags],
+          searchText: `${offer.title} ${offer.summary} ${offer.location}`.toLowerCase(),
         },
         update: {
-          targetType: review.targetType,
-          targetId: review.targetId,
-          targetName: review.targetName,
-          rating: review.rating,
-          body: review.body,
-          status: review.status,
-          authorName: review.authorName,
+          title: offer.title,
+          summary: offer.summary,
+          location: offer.location,
+          priceFrom: offer.priceFrom,
+          rating: offer.rating,
+          reviewCount: offer.reviewCount,
+          image: offer.image,
+          featured: Boolean(offer.featured),
+          tags: [...offer.tags],
+          searchText: `${offer.title} ${offer.summary} ${offer.location}`.toLowerCase(),
         },
       });
     }
 
-    for (const asset of payload.media) {
-      await prisma.mediaAsset.upsert({
-        where: { id: asset.id },
+    for (const article of helpArticles) {
+      await prisma.helpArticle.upsert({
+        where: { slug: article.slug },
         create: {
-          id: asset.id,
-          title: asset.title,
-          url: asset.url,
-          alt: asset.alt,
-          mimeType: asset.mimeType,
-          sizeBytes: asset.sizeBytes,
-          folder: asset.folder,
+          slug: article.slug,
+          title: article.title,
+          summary: article.summary,
+          category: article.category,
+          body: [...article.body],
         },
         update: {
-          title: asset.title,
-          url: asset.url,
-          alt: asset.alt,
-          mimeType: asset.mimeType,
-          sizeBytes: asset.sizeBytes,
-          folder: asset.folder,
+          title: article.title,
+          summary: article.summary,
+          category: article.category,
+          body: [...article.body],
         },
       });
     }
 
-    console.log("CMS seed applied to database.");
+    const homePayload = {
+      destinations: homeContent.destinations,
+      cafes: homeContent.cafes,
+      guides: homeContent.guides,
+      testimonials: homeContent.testimonials,
+      stats: homeContent.stats,
+      categories: homeContent.categories,
+      instagramPosts: homeContent.instagramPosts,
+    };
+
+    await prisma.homepageContent.upsert({
+      where: { key: "home" },
+      create: {
+        key: "home",
+        payload: homePayload as object,
+      },
+      update: {
+        payload: homePayload as object,
+      },
+    });
+
+    console.log("Production seed complete:", {
+      destinations: destinations.length,
+      cafes: cafes.length,
+      guides: guides.length,
+      stories: stories.length,
+      offers: offers.length,
+      helpArticles: helpArticles.length,
+    });
   } finally {
     await prisma.$disconnect();
-    await pool.end();
   }
 }
 
 main().catch((error) => {
-  console.error("CMS seed failed:", error);
+  console.error("Seed failed:", error);
   process.exit(1);
 });

@@ -28,6 +28,30 @@ enum ReviewTargetType {
   cafe
   guide
   community
+  hotel
+  tour
+  gear
+}
+
+enum BookmarkTargetType {
+  destination
+  cafe
+  guide
+  community
+}
+
+enum LikeTargetType {
+  destination
+  cafe
+  guide
+  community
+  comment
+}
+
+enum MediaProvider {
+  url
+  supabase
+  local
 }
 
 model User {
@@ -39,13 +63,42 @@ model User {
   role                    UserRole                 @default(traveler)
   emailVerified           Boolean                  @default(false)
   tokenVersion            Int                      @default(0)
+  bio                     String?
+  location                String?
+  website                 String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   preferences             Preferences?
+  profile                 Profile?
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   reviews                 Review[]                 @relation("ReviewAuthor")
   mediaUploads            MediaAsset[]             @relation("MediaUploader")
+  notifications           AppNotification[]
+  bookmarks               Bookmark[]
+  likes                   Like[]
+  followers               Follow[]                 @relation("Following")
+  following               Follow[]                 @relation("Follower")
+  trips                   Trip[]
+  memberships             Membership[]
+  comments                Comment[]
+  paymentIntents          PaymentIntentRecord[]
+
+  @@index([role])
+  @@index([name])
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName String?
+  headline    String?
+  avatarUrl   String?
+  coverUrl    String?
+  socials     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Preferences {
@@ -77,19 +130,57 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 }
 
+model Country {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  code      String?  @unique
+  flag      String?
+  region    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cities    City[]
+  destinations Destination[]
+  cafes     Cafe[]
+
+  @@index([name])
+}
+
+model City {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  countryId String
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  destinations Destination[]
+  cafes     Cafe[]
+
+  @@index([countryId])
+  @@index([name])
+}
+
 /// CMS category taxonomy (destinations, guides, community, etc.)
 model Category {
-  id          String        @id @default(uuid())
-  name        String
-  slug        String        @unique
-  description String?
-  scope       String        @default("general")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  destinations CmsDestination[]
-  cafes        CmsCafe[]
-  guides       CmsGuide[]
-  community    CmsCommunityPost[]
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  description  String?
+  scope        String        @default("general")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  destinations Destination[]
+  cafes        Cafe[]
+  guides       Guide[]
+  community    CommunityPost[]
+  /// Legacy CMS aliases kept for admin compatibility during migration.
+  cmsDestinations CmsDestination[]
+  cmsCafes        CmsCafe[]
+  cmsGuides       CmsGuide[]
+  cmsCommunity    CmsCommunityPost[]
 }
 
 model Tag {
@@ -100,6 +191,405 @@ model Tag {
   updatedAt DateTime @updatedAt
 }
 
+/// Public production destination catalog (rich payload for UI parity).
+model Destination {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  name         String
+  cityId       String?
+  city         City?         @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  countryId    String?
+  country      Country?      @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  countryName  String
+  cityName     String
+  region       String?
+  summary      String
+  description  String
+  heroImage    String?
+  coverImage   String?
+  rating       Float         @default(0)
+  reviewCount  Int           @default(0)
+  status       ContentStatus @default(published)
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags         String[]      @default([])
+  searchText   String        @default("")
+  /// Full DestinationDetail-compatible document for pixel-perfect UI.
+  payload      Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status])
+  @@index([countryName])
+  @@index([cityName])
+  @@index([rating])
+  @@index([searchText])
+}
+
+model Cafe {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  name         String
+  cityId       String?
+  city         City?         @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  countryId    String?
+  country      Country?      @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  countryName  String
+  cityName     String
+  summary      String
+  description  String
+  heroImage    String?
+  coverImage   String?
+  rating       Float         @default(0)
+  reviewCount  Int           @default(0)
+  status       ContentStatus @default(published)
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags         String[]      @default([])
+  amenities    String[]      @default([])
+  searchText   String        @default("")
+  payload      Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  images       CafeImage[]
+
+  @@index([status])
+  @@index([cityName])
+  @@index([rating])
+  @@index([searchText])
+}
+
+model CafeImage {
+  id        String   @id @default(uuid())
+  cafeId    String
+  cafe      Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([cafeId])
+}
+
+model GuideAuthor {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  bio       String?
+  avatarUrl String?
+  payload   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guides    Guide[]
+}
+
+model Guide {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  title        String
+  excerpt      String
+  body         String        @default("")
+  authorId     String?
+  author       GuideAuthor?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName   String
+  coverImage   String?
+  rating       Float         @default(0)
+  reviewCount  Int           @default(0)
+  status       ContentStatus @default(published)
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags         String[]      @default([])
+  searchText   String        @default("")
+  payload      Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status])
+  @@index([authorName])
+  @@index([searchText])
+}
+
+model CommunityTraveler {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  bio       String?
+  avatarUrl String?
+  payload   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     CommunityPost[]
+}
+
+model CommunityPost {
+  id           String             @id @default(uuid())
+  slug         String             @unique
+  title        String
+  body         String             @default("")
+  excerpt      String?
+  authorName   String
+  travelerId   String?
+  traveler     CommunityTraveler? @relation(fields: [travelerId], references: [id], onDelete: SetNull)
+  coverImage   String?
+  status       ContentStatus      @default(published)
+  categoryId   String?
+  category     Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags         String[]           @default([])
+  likeCount    Int                @default(0)
+  commentCount Int                @default(0)
+  searchText   String             @default("")
+  payload      Json
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  comments     Comment[]
+
+  @@index([status])
+  @@index([searchText])
+}
+
+model Comment {
+  id        String         @id @default(uuid())
+  postId    String?
+  post      CommunityPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]      @relation("CommentReplies")
+  authorId  String?
+  author    User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String
+  body      String
+  status    ContentStatus  @default(published)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([postId])
+  @@index([parentId])
+}
+
+model Bookmark {
+  id         String             @id @default(uuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType BookmarkTargetType
+  targetId   String
+  targetSlug String?
+  createdAt  DateTime           @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+}
+
+model Like {
+  id         String         @id @default(uuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType LikeTargetType
+  targetId   String
+  createdAt  DateTime       @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+model Trip {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  destination String?
+  startDate   DateTime?
+  endDate     DateTime?
+  shareSlug   String?    @unique
+  isPublic    Boolean    @default(false)
+  payload     Json
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  planName  String
+  status    String   @default("active")
+  interval  String   @default("month")
+  renewsAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model Review {
+  id         String           @id @default(uuid())
+  targetType ReviewTargetType
+  targetId   String
+  targetName String
+  rating     Int
+  title      String?
+  body       String
+  photos     String[]         @default([])
+  status     ContentStatus    @default(draft)
+  authorId   String?
+  author     User?            @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String
+  authorEmail String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([targetType, targetId])
+  @@index([status])
+}
+
+model MediaAsset {
+  id           String        @id @default(uuid())
+  title        String
+  url          String
+  alt          String?
+  mimeType     String        @default("image/jpeg")
+  sizeBytes    Int           @default(0)
+  folder       String        @default("uploads")
+  provider     MediaProvider @default(url)
+  storagePath  String?
+  uploadedById String?
+  uploadedBy   User?         @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([folder])
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  title     String
+  message   String
+  href      String?
+  unread    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, unread])
+}
+
+model PaymentIntentRecord {
+  id           String   @id @default(uuid())
+  providerId   String   @unique
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  amount       Int
+  currency     String   @default("usd")
+  status       String
+  description  String
+  clientSecret String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AffiliateClick {
+  id        String   @id @default(uuid())
+  partnerId String
+  offerId   String
+  createdAt DateTime @default(now())
+
+  @@index([partnerId, createdAt])
+}
+
+model CommerceOffer {
+  id               String        @id @default(uuid())
+  slug             String        @unique
+  category         String
+  title            String
+  summary          String
+  location         String
+  priceFrom        Float
+  currency         String        @default("USD")
+  rating           Float         @default(0)
+  reviewCount      Int           @default(0)
+  affiliatePartner String
+  image            String
+  featured         Boolean       @default(false)
+  tags             String[]      @default([])
+  status           ContentStatus @default(published)
+  searchText       String        @default("")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([category, status])
+}
+
+model MembershipPlan {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  name          String
+  description   String
+  priceMonthly  Float
+  priceYearly   Float
+  features      String[] @default([])
+  highlighted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AffiliatePartner {
+  id              String   @id @default(uuid())
+  name            String
+  network         String
+  category        String
+  commissionLabel String
+  trackingParam   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model HomepageContent {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  payload   Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model HelpArticle {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  summary   String
+  category  String
+  body      String[]
+  status    ContentStatus @default(published)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Legacy slim CMS tables retained for admin migration compatibility.
 model CmsDestination {
   id          String        @id @default(uuid())
   title       String
@@ -160,83 +650,4 @@ model CmsCommunityPost {
   tags        String[]      @default([])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-}
-
-model Review {
-  id         String           @id @default(uuid())
-  targetType ReviewTargetType
-  targetId   String
-  targetName String
-  rating     Int
-  body       String
-  status     ContentStatus    @default(draft)
-  authorId   String?
-  author     User?            @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  authorName String
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-}
-
-model MediaAsset {
-  id           String   @id @default(uuid())
-  title        String
-  url          String
-  alt          String?
-  mimeType     String   @default("image/jpeg")
-  sizeBytes    Int      @default(0)
-  folder       String   @default("uploads")
-  uploadedById String?
-  uploadedBy   User?    @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-/// Contact form inbox — email-template ready.
-model ContactMessage {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  message   String
-  status    String   @default("new")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-/// In-app notification feed (push/email adapters plug in later).
-model AppNotification {
-  id        String   @id @default(uuid())
-  userId    String
-  kind      String
-  title     String
-  message   String
-  href      String?
-  unread    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId, unread])
-}
-
-/// Payment-ready intent ledger (Stripe-shaped).
-model PaymentIntentRecord {
-  id           String   @id @default(uuid())
-  providerId   String   @unique
-  userId       String?
-  amount       Int
-  currency     String   @default("usd")
-  status       String
-  description  String
-  clientSecret String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-/// Affiliate click attribution.
-model AffiliateClick {
-  id        String   @id @default(uuid())
-  partnerId String
-  offerId   String
-  createdAt DateTime @default(now())
-
-  @@index([partnerId, createdAt])
 }

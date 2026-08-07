@@ -37,12 +37,13 @@ export {
   RelatedGuidesSection,
 } from "./components";
 
+export { getFilterOptions } from "./data/destinations-store";
+/** Prefer `./data/destinations-loader` in Server Components / route handlers. */
 export {
   getAllDestinations,
   getDestinationBySlug,
   getDestinationSlugs,
   getNearbyDestinations,
-  getFilterOptions,
 } from "./data/destinations-store";
 
 export {

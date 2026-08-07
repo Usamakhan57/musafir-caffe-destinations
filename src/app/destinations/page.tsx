@@ -6,7 +6,6 @@ import {
   DestinationsListingHero,
   DestinationsToolbar,
   PaginationControls,
-  getAllDestinations,
   getFilterOptions,
   parseDestinationFilters,
   filterDestinations,
@@ -14,6 +13,7 @@ import {
   paginate,
   DESTINATIONS_PAGE_SIZE,
 } from "@/features/destinations";
+import { getAllDestinations } from "@/features/destinations/data/destinations-loader";
 
 export const metadata = createPageMetadata({
   title: "Destinations",

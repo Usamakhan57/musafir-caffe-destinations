@@ -3,8 +3,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { siteConfig } from "@/config";
-import { getNearbyCafes } from "@/features/cafes";
-import { getNearbyDestinations } from "@/features/destinations";
+import { getNearbyCafes } from "@/features/cafes/data/cafes-loader";
+import { getNearbyDestinations } from "@/features/destinations/data/destinations-loader";
 import {
   BackToGuidesLink,
   GuideActions,
@@ -21,11 +21,13 @@ import {
   NearbyDestinationsFromGuide,
   NewsletterCTA,
   ReadingProgressBar,
+} from "@/features/guides";
+import {
   getAuthorForGuide,
   getGuideBySlug,
   getGuideSlugs,
   getGuidesBySlugs,
-} from "@/features/guides";
+} from "@/features/guides/data/guides-loader";
 
 interface GuidePageProps {
   params: Promise<{ slug: string }>;

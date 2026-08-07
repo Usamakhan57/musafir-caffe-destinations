@@ -6,7 +6,6 @@ import {
   CafesListingHero,
   CafesToolbar,
   PaginationControls,
-  getAllCafes,
   getFilterOptions,
   parseCafeFilters,
   filterCafes,
@@ -14,6 +13,7 @@ import {
   paginate,
   CAFES_PAGE_SIZE,
 } from "@/features/cafes";
+import { getAllCafes } from "@/features/cafes/data/cafes-loader";
 
 export const metadata = createPageMetadata({
   title: "Cafés",

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ROUTES } from "@/constants";
 import { SectionHeading } from "@/shared/ui";
 
-import { getGuideFilterOptions, getAllGuides } from "../data/guides-store";
+import { getGuideFilterOptions, getAllGuides } from "../data/guides-loader";
 
 const COUNTRY_IMAGES: Record<string, string> = {
   Türkiye:

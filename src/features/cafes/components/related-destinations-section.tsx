@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { destinationRoute } from "@/constants";
-import { getDestinationBySlug } from "@/features/destinations";
+import { getDestinationBySlug } from "@/features/destinations/data/destinations-loader";
 
 interface RelatedDestinationsSectionProps {
   slugs: readonly string[];

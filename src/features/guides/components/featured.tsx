@@ -1,6 +1,6 @@
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
-import { getAuthorForGuide, getFeaturedGuides } from "../data/guides-store";
+import { getAuthorForGuide, getFeaturedGuides } from "../data/guides-loader";
 import GuideCard from "./guide-card";
 
 export default async function FeaturedGuides() {
