@@ -1,4 +1,6 @@
 import type { CafeDetail } from "../types";
+import { enrichCafe, type RawCafe } from "./enrich-cafe";
+import { COFFEE_TYPES } from "../types";
 
 /**
  * In-memory cafés catalog.
@@ -7,7 +9,7 @@ import type { CafeDetail } from "../types";
  * page components should consume the exported helpers below so the data layer
  * can later be swapped for Prisma without redesigning the UI.
  */
-const cafes: CafeDetail[] = [
+const cafes: RawCafe[] = [
   {
     slug: "tomoca-coffee-addis",
     name: "Tomoca Coffee",
@@ -273,12 +275,17 @@ const cafes: CafeDetail[] = [
   },
 ];
 
+function allEnriched(): CafeDetail[] {
+  return cafes.map(enrichCafe);
+}
+
 export async function getAllCafes(): Promise<CafeDetail[]> {
-  return cafes;
+  return allEnriched();
 }
 
 export async function getCafeBySlug(slug: string): Promise<CafeDetail | null> {
-  return cafes.find((cafe) => cafe.slug === slug) ?? null;
+  const raw = cafes.find((cafe) => cafe.slug === slug);
+  return raw ? enrichCafe(raw) : null;
 }
 
 export async function getCafeSlugs(): Promise<string[]> {
@@ -286,14 +293,16 @@ export async function getCafeSlugs(): Promise<string[]> {
 }
 
 export async function getNearbyCafes(slugs: readonly string[]): Promise<CafeDetail[]> {
-  return cafes.filter((cafe) => slugs.includes(cafe.slug));
+  return cafes.filter((cafe) => slugs.includes(cafe.slug)).map(enrichCafe);
 }
 
 export function getFilterOptions() {
+  const enriched = allEnriched();
   return {
-    categories: Array.from(new Set(cafes.map((cafe) => cafe.category))),
-    cities: Array.from(new Set(cafes.map((cafe) => cafe.city))).sort(),
-    countries: Array.from(new Set(cafes.map((cafe) => cafe.country))).sort(),
+    categories: Array.from(new Set(enriched.map((cafe) => cafe.category))),
+    cities: Array.from(new Set(enriched.map((cafe) => cafe.city))).sort(),
+    countries: Array.from(new Set(enriched.map((cafe) => cafe.country))).sort(),
+    coffeeTypes: Array.from(new Set(enriched.map((cafe) => cafe.coffeeType))).sort() as typeof COFFEE_TYPES[number][],
     ratings: [4.5, 4.6, 4.7, 4.8, 4.9],
     priceLevels: ["$", "$$", "$$$"] as const,
   };

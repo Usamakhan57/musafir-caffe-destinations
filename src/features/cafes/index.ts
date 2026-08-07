@@ -8,6 +8,7 @@ export {
   CafeCard,
   CafesGrid,
   CafesToolbar,
+  CafesListingHero,
   PaginationControls,
   CafeHero,
   Gallery,
@@ -16,6 +17,15 @@ export {
   ReviewsSection,
   NearbyCafesSection,
   RelatedDestinationsSection,
+  CafeActions,
+  AboutStorySection,
+  ScoresSection,
+  MenuHighlightsSection,
+  ContactInfoSection,
+  FoodOptionsSection,
+  NearbyAttractionsSection,
+  MapPlaceholderSection,
+  SignatureCoffeeBanner,
 } from "./components";
 
 export {
@@ -35,8 +45,11 @@ export {
   buildCafeQuery,
 } from "./lib/query";
 
+export { isCafeOpenNow } from "./data/enrich-cafe";
+
 export type {
   CafeCategory,
+  CoffeeType,
   CafeSortOption,
   PriceLevel,
   CafeSummary,
@@ -46,6 +59,9 @@ export type {
   PaginatedResult,
   GalleryImage,
   Review,
+  MenuHighlight,
+  NearbyAttraction,
+  MapPlaceholder,
 } from "./types";
 
-export { CAFE_CATEGORIES, CAFE_SORT_OPTIONS } from "./types";
+export { CAFE_CATEGORIES, CAFE_SORT_OPTIONS, COFFEE_TYPES } from "./types";

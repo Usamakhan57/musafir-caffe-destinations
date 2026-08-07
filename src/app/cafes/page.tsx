@@ -1,9 +1,9 @@
 import { createPageMetadata } from "@/shared/lib/seo";
 import { ROUTES } from "@/constants";
 import { Breadcrumbs } from "@/shared/components";
-import { SectionHeading } from "@/shared/ui";
 import {
   CafesGrid,
+  CafesListingHero,
   CafesToolbar,
   PaginationControls,
   getAllCafes,
@@ -18,7 +18,7 @@ import {
 export const metadata = createPageMetadata({
   title: "Cafés",
   description:
-    "Explore curated cafés around the world — search by city, category, price, and rating, then discover the kind of coffee ritual that fits your next trip.",
+    "Explore a premium café directory — filter by country, city, coffee type, amenities, rating, and price to find your next favorite cup.",
   path: ROUTES.cafes,
 });
 
@@ -39,18 +39,18 @@ export default async function CafesPage({ searchParams }: CafesPageProps) {
 
   return (
     <main className="flex flex-1 flex-col overflow-x-hidden bg-[#FAFAF9]">
+      <CafesListingHero />
+
       <section className="mx-auto w-full max-w-7xl px-5 pb-8 pt-10 sm:px-8 sm:pt-12 lg:px-12">
         <Breadcrumbs items={[{ label: "Cafés" }]} />
-        <SectionHeading
-          eyebrow="Discover"
-          title="Cafés with character — from heritage bars to quiet work tables"
-          description="Find the coffee room that fits your mood: specialty pour-overs, grand historical salons, and neighborhood spots where travelers actually linger."
-          align="left"
-        />
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-8 sm:pb-24 lg:px-12">
-        <CafesToolbar filters={{ ...filters, page }} options={filterOptions} resultCount={filtered.length} />
+        <CafesToolbar
+          filters={{ ...filters, page }}
+          options={filterOptions}
+          resultCount={filtered.length}
+        />
 
         <div className="mt-10">
           <CafesGrid cafes={items} />

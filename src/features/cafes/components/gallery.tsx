@@ -14,7 +14,14 @@ export function Gallery({ images }: GalleryProps) {
       {images.map((image, index) => (
         <div key={`${image.src}-${index}`} className="overflow-hidden rounded-2xl border border-cream-200/70 bg-cream-50 shadow-card">
           <div className="relative aspect-[4/3]">
-            <Image src={image.src} alt={image.alt} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
+            <Image
+              src={image.src}
+              alt={image.alt}
+              fill
+              sizes="(max-width: 640px) 100vw, 50vw"
+              className="object-cover"
+              loading="lazy"
+            />
           </div>
         </div>
       ))}
