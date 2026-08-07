@@ -52,3 +52,13 @@ export function destinationRoute(slug: string): string {
 export function cafeRoute(slug: string): string {
   return `${ROUTES.cafes}/${slug}`;
 }
+
+/** Detail route for a single travel guide. */
+export function guideRoute(slug: string): string {
+  return `${ROUTES.guides}/${slug}`;
+}
+
+/** Public author profile for guide writers. */
+export function guideAuthorRoute(slug: string): string {
+  return `${ROUTES.guides}/authors/${slug}`;
+}
