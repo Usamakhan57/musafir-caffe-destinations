@@ -15,16 +15,20 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      {state?.message && !state.success && (
-        <p className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-600">
+      {state?.message && !state.success ? (
+        <p
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700"
+          role="alert"
+        >
           {state.message}
         </p>
-      )}
+      ) : null}
       <FormField
         id="name"
         label="Full name"
         placeholder="Jane Doe"
         errors={state?.errors?.name}
+        autoComplete="name"
         required
       />
       <FormField
@@ -33,6 +37,7 @@ export function RegisterForm() {
         type="email"
         placeholder="you@example.com"
         errors={state?.errors?.email}
+        autoComplete="email"
         required
       />
       <FormField
@@ -41,6 +46,7 @@ export function RegisterForm() {
         type="password"
         placeholder="Min. 8 characters"
         errors={state?.errors?.password}
+        autoComplete="new-password"
         required
       />
       <FormField
@@ -49,17 +55,18 @@ export function RegisterForm() {
         type="password"
         placeholder="Repeat your password"
         errors={state?.errors?.confirmPassword}
+        autoComplete="new-password"
         required
       />
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="role" className="text-sm font-medium text-coffee-800">
+        <label htmlFor="role" className="text-sm font-medium text-[#111827]">
           I am a
         </label>
         <select
           id="role"
           name="role"
           defaultValue="traveler"
-          className="rounded-lg border border-cream-300 bg-cream-50 px-4 py-2.5 text-sm text-coffee-900"
+          className="h-12 w-full rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm text-[#111827] outline-none transition focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
         >
           <option value="traveler">Traveler</option>
           <option value="cafe-owner">Cafe owner</option>

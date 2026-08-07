@@ -146,7 +146,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:border-[#14B8A6]/40 hover:bg-[#0F766E]/30 hover:text-white"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:-translate-y-0.5 hover:border-[#14B8A6]/40 hover:bg-[#0F766E]/30 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6]"
                     aria-label={social.label}
                   >
                     <Icon />
@@ -166,9 +166,11 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/65 transition hover:text-white"
+                      className="group inline-flex text-sm text-white/65 transition hover:text-white"
                     >
-                      {link.label}
+                      <span className="border-b border-transparent transition group-hover:border-white/40">
+                        {link.label}
+                      </span>
                     </Link>
                   </li>
                 ))}
