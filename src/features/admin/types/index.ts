@@ -15,6 +15,16 @@ export const ADMIN_RESOURCES = [
   "tags",
   "reviews",
   "media",
+  "countries",
+  "cities",
+  "homepage",
+  "seo",
+  "settings",
+  "contact",
+  "newsletter",
+  "notifications",
+  "payments",
+  "affiliates",
 ] as const;
 
 export type AdminResource = (typeof ADMIN_RESOURCES)[number];
@@ -59,6 +69,8 @@ export interface DestinationRecord {
   categoryId: string | null;
   coverImage: string | null;
   tags: string[];
+  /** Full destination JSON payload (stringified for ResourceManager). */
+  payload?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -150,4 +162,9 @@ export interface AnalyticsSnapshot {
   published: number;
   draft: number;
   pendingReviews: number;
+  revenueCents: number;
+  paymentCount: number;
+  memberships: number;
+  affiliateClicks: number;
+  traffic: number;
 }

@@ -50,6 +50,7 @@ export default async function AdminUsersPage() {
               { label: "True", value: "true" },
             ],
           },
+          { key: "password", label: "Password (optional on edit)", required: false },
         ]}
       />
     </AdminShell>

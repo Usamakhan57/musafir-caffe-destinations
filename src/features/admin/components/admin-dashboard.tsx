@@ -15,8 +15,18 @@ const modules = [
   { title: "Community", href: `${ROUTES.admin}/community`, description: "Stories and engagement posts", status: "Live" },
   { title: "Categories", href: `${ROUTES.admin}/categories`, description: "Taxonomy across content types", status: "Live" },
   { title: "Tags", href: `${ROUTES.admin}/tags`, description: "Shared tagging vocabulary", status: "Live" },
+  { title: "Countries", href: `${ROUTES.admin}/countries`, description: "Country taxonomy for destinations and cafés", status: "Live" },
+  { title: "Cities", href: `${ROUTES.admin}/cities`, description: "City records linked to countries", status: "Live" },
   { title: "Reviews", href: `${ROUTES.admin}/reviews`, description: "Quality scoring and moderation", status: "Live" },
   { title: "Media Library", href: `${ROUTES.admin}/media`, description: "Images, galleries, and assets", status: "Live" },
+  { title: "Homepage", href: `${ROUTES.admin}/homepage`, description: "Homepage content documents", status: "Live" },
+  { title: "SEO", href: `${ROUTES.admin}/seo`, description: "Page titles, descriptions, and indexing", status: "Live" },
+  { title: "Settings", href: `${ROUTES.admin}/settings`, description: "Website configuration keys", status: "Live" },
+  { title: "Contact", href: `${ROUTES.admin}/contact`, description: "Inbound contact messages", status: "Live" },
+  { title: "Newsletter", href: `${ROUTES.admin}/newsletter`, description: "Subscriber list management", status: "Live" },
+  { title: "Notifications", href: `${ROUTES.admin}/notifications`, description: "System and user notifications", status: "Live" },
+  { title: "Payments", href: `${ROUTES.admin}/payments`, description: "Payment intents and revenue", status: "Live" },
+  { title: "Affiliates", href: `${ROUTES.admin}/affiliates`, description: "Affiliate partners and tracking", status: "Live" },
 ];
 
 export function AdminDashboard() {
@@ -36,10 +46,22 @@ export function AdminDashboard() {
   }, []);
 
   const metrics = [
-    { label: "Active users", value: analytics ? String(analytics.users) : "—", trend: "CMS" },
-    { label: "Published", value: analytics ? String(analytics.published) : "—", trend: "content" },
-    { label: "Pending review", value: analytics ? String(analytics.pendingReviews) : "—", trend: "moderation" },
-    { label: "Media assets", value: analytics ? String(analytics.media) : "—", trend: "library" },
+    { label: "Users", value: analytics ? String(analytics.users) : "—", trend: "accounts" },
+    { label: "Destinations", value: analytics ? String(analytics.destinations) : "—", trend: "catalog" },
+    { label: "Cafés", value: analytics ? String(analytics.cafes) : "—", trend: "catalog" },
+    { label: "Guides", value: analytics ? String(analytics.guides) : "—", trend: "catalog" },
+    { label: "Community", value: analytics ? String(analytics.community) : "—", trend: "posts" },
+    { label: "Reviews", value: analytics ? String(analytics.reviews) : "—", trend: "moderation" },
+    {
+      label: "Revenue",
+      value: analytics ? `$${(analytics.revenueCents / 100).toFixed(2)}` : "—",
+      trend: `${analytics?.paymentCount ?? 0} payments`,
+    },
+    {
+      label: "Memberships",
+      value: analytics ? String(analytics.memberships) : "—",
+      trend: `traffic ${analytics?.traffic ?? "—"}`,
+    },
   ];
 
   return (
@@ -54,20 +76,21 @@ export function AdminDashboard() {
               Run content, community, and operational workflows from one premium console.
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              Prisma-ready CRUD, REST APIs, roles (Admin / Editor / Moderator / Traveler), and a
-              Supabase-ready media architecture.
+              Production Prisma CRUD, JWT role protection, and Supabase media uploads for the full
+              travel ecosystem.
             </p>
           </div>
           <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm backdrop-blur">
             <p className="font-semibold">Operational focus</p>
             <p className="mt-1 text-slate-300">
-              Draft {analytics?.draft ?? "—"} · Reviews {analytics?.reviews ?? "—"}
+              Draft {analytics?.draft ?? "—"} · Pending reviews {analytics?.pendingReviews ?? "—"} ·
+              Affiliates {analytics?.affiliateClicks ?? "—"}
             </p>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         {metrics.map((metric) => (
           <div
             key={metric.label}

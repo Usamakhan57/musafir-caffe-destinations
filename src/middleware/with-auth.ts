@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 import type { ProxyHandler } from "./chain";
 
@@ -29,15 +30,13 @@ function getSessionToken(request: NextRequest): string | undefined {
  *
  * - Redirects unauthenticated users away from protected routes.
  * - Redirects authenticated users away from auth pages (login/register).
- * - Blocks non-admin users from admin routes.
- *
- * Note: This checks for the presence of a session cookie as a fast guard.
- * Full session validation happens server-side in route handlers / pages.
+ * - Blocks non-staff users from admin routes using the JWT role claim
+ *   (not a fragile secondary cookie).
  */
-export const withAuth: ProxyHandler = (request: NextRequest) => {
+export const withAuth: ProxyHandler = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
-  const token = getSessionToken(request);
-  const isAuthenticated = Boolean(token);
+  const tokenCookie = getSessionToken(request);
+  const isAuthenticated = Boolean(tokenCookie);
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
   if (isAuthRoute && isAuthenticated) {
@@ -52,13 +51,19 @@ export const withAuth: ProxyHandler = (request: NextRequest) => {
   }
 
   const isAdminRoute = ROLE_PROTECTED_ROUTES.admin.some((route) => pathname.startsWith(route));
-  if (isAdminRoute && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  if (isAdminRoute) {
+    const jwt = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET ?? "development-secret",
+      secureCookie: process.env.NODE_ENV === "production",
+    });
 
-  if (isAdminRoute && isAuthenticated) {
-    const role = request.cookies.get("authjs.role")?.value;
-    if (!role || !STAFF_ROLES.has(role)) {
+    if (!jwt) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    const role = typeof jwt.role === "string" ? jwt.role : "";
+    if (!STAFF_ROLES.has(role)) {
       return NextResponse.redirect(new URL("/profile", request.url));
     }
   }

@@ -112,7 +112,7 @@ export function ResourceManager({
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean);
-      } else if (field.key === "rating" || field.key === "sizeBytes") {
+      } else if (field.key === "rating" || field.key === "sizeBytes" || field.key === "lat" || field.key === "lng" || field.key === "amount") {
         payload[field.key] = Number(raw) || 0;
       } else if (field.key === "emailVerified") {
         payload[field.key] = raw === "true";

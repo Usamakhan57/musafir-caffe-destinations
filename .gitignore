@@ -33,3 +33,7 @@ tmp-*.js
 screenshot-*.png
 capture-*.js
 /src/generated/prisma
+
+# Local media upload fallback
+/public/uploads
+

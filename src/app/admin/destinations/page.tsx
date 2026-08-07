@@ -32,6 +32,7 @@ export default async function AdminDestinationsPage() {
           { key: "summary", label: "Summary", type: "textarea", required: true },
           { key: "coverImage", label: "Cover image URL", type: "url" },
           { key: "tags", label: "Tags (comma-separated)" },
+          { key: "payload", label: "Full destination payload (JSON)", type: "textarea" },
           {
             key: "status",
             label: "Status",

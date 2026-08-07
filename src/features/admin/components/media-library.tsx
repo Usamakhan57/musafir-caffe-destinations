@@ -25,6 +25,7 @@ export function MediaLibrary() {
   const [url, setUrl] = useState("");
   const [alt, setAlt] = useState("");
   const [folder, setFolder] = useState("uploads");
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -47,6 +48,25 @@ export function MediaLibrary() {
 
   async function upload() {
     setError(null);
+    if (file) {
+      const form = new FormData();
+      form.set("file", file);
+      form.set("title", title || file.name);
+      form.set("alt", alt);
+      form.set("folder", folder);
+      const res = await fetch("/api/admin/media/upload", { method: "POST", body: form });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Upload failed");
+        return;
+      }
+      setTitle("");
+      setAlt("");
+      setFile(null);
+      load();
+      return;
+    }
+
     const res = await fetch("/api/admin/media", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -87,7 +107,8 @@ export function MediaLibrary() {
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-950">Image upload & gallery</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Supabase-storage ready interface. Paste an image URL to register assets in the CMS gallery.
+          Upload images to Supabase Storage when configured, or register an image URL in the CMS
+          gallery.
         </p>
       </div>
 
@@ -109,7 +130,16 @@ export function MediaLibrary() {
           />
         </label>
         <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
-          Image URL
+          Upload file
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="mt-1.5 block w-full text-sm text-slate-700"
+          />
+        </label>
+        <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
+          Or image URL
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -125,6 +155,17 @@ export function MediaLibrary() {
             className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
           />
         </label>
+        {file ? (
+          <div className="sm:col-span-2">
+            <p className="mb-2 text-xs font-semibold text-slate-600">Preview</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={URL.createObjectURL(file)}
+              alt="Upload preview"
+              className="h-40 w-full rounded-xl object-cover"
+            />
+          </div>
+        ) : null}
         <button
           type="button"
           onClick={() => void upload()}
