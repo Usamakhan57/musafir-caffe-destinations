@@ -31,8 +31,14 @@ function mapRoleToDb(role: UserRole): PrismaUserRole {
       return "cafe_owner";
     case "guide-creator":
       return "guide_creator";
+    case "editor":
+      return "editor";
+    case "moderator":
+      return "moderator";
+    case "admin":
+      return "admin";
     default:
-      return role as PrismaUserRole;
+      return "traveler";
   }
 }
 
@@ -42,8 +48,14 @@ function mapRoleFromDb(role: PrismaUserRole): UserRole {
       return "cafe-owner";
     case "guide_creator":
       return "guide-creator";
+    case "editor":
+      return "editor";
+    case "moderator":
+      return "moderator";
+    case "admin":
+      return "admin";
     default:
-      return role as UserRole;
+      return "traveler";
   }
 }
 
