@@ -13,13 +13,12 @@ import { findUserByEmail, verifyPassword } from "@/features/auth/data/user-store
  * Production admin heal + schema patch.
  *
  * POST /api/admin/bootstrap
- * Header: x-bootstrap-secret: <ADMIN_BOOTSTRAP_SECRET | AUTH_SECRET | ops token>
+ * Header: x-bootstrap-secret: <ADMIN_BOOTSTRAP_SECRET or AUTH_SECRET>
  *
  * Hostinger runtimes cannot reliably shell out to `prisma migrate deploy`,
- * so this endpoint applies the critical missing User columns via SQL, then
+ * so this endpoint applies critical missing auth tables/columns via SQL, then
  * creates/repairs admin@musafircaffe.com with a valid bcrypt password.
  */
-const OPS_HEAL_TOKEN = "musafir-bootstrap-heal-2026";
 
 function isAuthorized(request: Request): boolean {
   const expected =
@@ -29,7 +28,7 @@ function isAuthorized(request: Request): boolean {
   const provided =
     request.headers.get("x-bootstrap-secret") ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  return Boolean(provided) && (provided === expected || provided === OPS_HEAL_TOKEN);
+  return Boolean(provided) && provided === expected;
 }
 
 async function patchProductionSchema(): Promise<{
