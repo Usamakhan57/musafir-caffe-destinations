@@ -228,9 +228,9 @@ export function Hero() {
                 >
                   {feature.icon}
                 </div>
-                <h2 className="mt-4 font-serif text-lg font-semibold text-[#111827]">
+                <p className="mt-4 font-serif text-lg font-semibold text-[#111827]">
                   {feature.title}
-                </h2>
+                </p>
                 <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
                   {feature.description}
                 </p>
@@ -265,9 +265,9 @@ export function Hero() {
                   >
                     {feature.icon}
                   </div>
-                  <h2 className="mt-4 font-serif text-lg font-semibold text-[#111827]">
+                  <p className="mt-4 font-serif text-lg font-semibold text-[#111827]">
                     {feature.title}
-                  </h2>
+                  </p>
                   <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
                     {feature.description}
                   </p>

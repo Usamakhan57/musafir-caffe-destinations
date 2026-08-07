@@ -4,12 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 
 import { FadeIn } from "@/shared/ui";
 
-const stats = [
-  { value: "12,000+", label: "Cafés catalogued" },
-  { value: "180+", label: "Countries & regions" },
-  { value: "50,000+", label: "Travelers in community" },
-  { value: "4.9★", label: "Average traveler rating" },
-] as const;
+import { stats } from "../data/content";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
