@@ -1,3 +1,5 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { NextResponse } from "next/server";
 
 import {
@@ -10,15 +12,16 @@ import { isDatabaseReady, resetDatabaseReadyCache } from "@/lib/prisma";
 import { findUserByEmail, verifyPassword } from "@/features/auth/data/user-store";
 
 /**
- * Production admin heal endpoint.
+ * Production admin heal + migration bootstrap.
  *
  * POST /api/admin/bootstrap
- * Header: x-bootstrap-secret: <ADMIN_BOOTSTRAP_SECRET or AUTH_SECRET>
- *   OR   x-bootstrap-secret: musafir-bootstrap-heal-2026 (temporary ops token)
+ * Header: x-bootstrap-secret: <ADMIN_BOOTSTRAP_SECRET | AUTH_SECRET | ops token>
  *
- * Creates/repairs admin@musafircaffe.com with a valid bcrypt password.
+ * Optionally JSON body: { "migrate": true } to run `prisma migrate deploy`
+ * against the Hostinger DATABASE_URL (required when schema is behind).
  */
 const OPS_HEAL_TOKEN = "musafir-bootstrap-heal-2026";
+const execFileAsync = promisify(execFile);
 
 function isAuthorized(request: Request): boolean {
   const expected =
@@ -31,9 +34,54 @@ function isAuthorized(request: Request): boolean {
   return Boolean(provided) && (provided === expected || provided === OPS_HEAL_TOKEN);
 }
 
+async function runMigrateDeploy(): Promise<{
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+}> {
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      "npx",
+      ["prisma", "migrate", "deploy"],
+      {
+        cwd: process.cwd(),
+        env: process.env,
+        timeout: 120_000,
+        maxBuffer: 2 * 1024 * 1024,
+      },
+    );
+    return { ok: true, stdout: stdout.toString(), stderr: stderr.toString() };
+  } catch (error) {
+    const err = error as {
+      message?: string;
+      stdout?: Buffer | string;
+      stderr?: Buffer | string;
+    };
+    return {
+      ok: false,
+      stdout: String(err.stdout ?? ""),
+      stderr: String(err.stderr ?? err.message ?? "migrate failed"),
+    };
+  }
+}
+
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let migrateRequested = true;
+  try {
+    const body = (await request.json()) as { migrate?: boolean };
+    if (typeof body?.migrate === "boolean") migrateRequested = body.migrate;
+  } catch {
+    // empty body → migrate by default for production heal
+    migrateRequested = true;
+  }
+
+  let migrate: Awaited<ReturnType<typeof runMigrateDeploy>> | null = null;
+  if (migrateRequested) {
+    migrate = await runMigrateDeploy();
   }
 
   resetDatabaseReadyCache();
@@ -47,6 +95,7 @@ export async function POST(request: Request) {
   let role: string | null = null;
   let hasPassword = false;
   let exists = false;
+  let verifyError: string | null = null;
 
   if (dbReady) {
     try {
@@ -61,20 +110,15 @@ export async function POST(request: Request) {
         );
       }
     } catch (error) {
-      return NextResponse.json(
-        {
-          ok: false,
-          databaseUrlSet,
-          dbReady,
-          ensure: result,
-          verifyError: error instanceof Error ? error.message : "verify failed",
-        },
-        { status: 503 },
-      );
+      verifyError = error instanceof Error ? error.message : "verify failed";
     }
   }
 
-  const ok = result.ok && passwordMatchesBootstrap && role === "admin";
+  const ok =
+    result.ok &&
+    passwordMatchesBootstrap &&
+    role === "admin" &&
+    (!migrate || migrate.ok);
 
   return NextResponse.json(
     {
@@ -83,11 +127,13 @@ export async function POST(request: Request) {
       loginUrl: "/login",
       databaseUrlSet,
       dbReady,
+      migrate,
       ensure: result,
       exists,
       role,
       hasPassword,
       passwordMatchesBootstrap,
+      verifyError,
       authUrl: process.env.AUTH_URL ?? null,
       appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
     },
