@@ -396,8 +396,8 @@ export const instagramPosts: InstagramPost[] = [
 ];
 
 export const stats = [
-  { value: "128", label: "Countries covered" },
-  { value: "2,400+", label: "Cafés reviewed" },
-  { value: "86k", label: "Traveling members" },
-  { value: "40+", label: "Meetup cities" },
+  { value: "12,000+", label: "Cafés catalogued" },
+  { value: "180+", label: "Countries & regions" },
+  { value: "50,000+", label: "Travelers in community" },
+  { value: "4.9★", label: "Average traveler rating" },
 ] as const;

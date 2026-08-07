@@ -1,4 +1,6 @@
 export { Hero } from "./hero";
+export { PremiumCards } from "./premium-cards";
+export { HeroStats } from "./hero-stats";
 export { FeaturedDestinations } from "./featured-destinations";
 export { FeaturedCafes } from "./featured-cafes";
 export { TravelGuides } from "./travel-guides";
