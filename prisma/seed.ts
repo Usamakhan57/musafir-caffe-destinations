@@ -2,6 +2,7 @@
  * Production seed — upserts catalogs, CMS, monetization, and help content.
  * Run: npm run db:seed
  */
+import { hash } from "bcryptjs";
 import { getCmsSeedPayload } from "../src/features/admin/data/cms-store";
 import { helpArticles } from "../src/features/content/help-articles";
 import {
@@ -270,7 +271,14 @@ async function main() {
   try {
     const cms = getCmsSeedPayload();
 
+    const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD ?? "Admin@12345";
+    const bootstrapHash = await hash(bootstrapPassword, 12);
+
     for (const user of cms.users) {
+      const existing = await prisma.user.findUnique({ where: { email: user.email } });
+      const shouldSetPassword =
+        user.email === "admin@musafircaffe.com" && (!existing || !existing.password);
+
       await prisma.user.upsert({
         where: { email: user.email },
         create: {
@@ -280,11 +288,13 @@ async function main() {
           role: mapRole(user.role),
           emailVerified: user.emailVerified,
           image: user.image ?? null,
+          password: user.email === "admin@musafircaffe.com" ? bootstrapHash : null,
         },
         update: {
           name: user.name,
           role: mapRole(user.role),
           emailVerified: user.emailVerified,
+          ...(shouldSetPassword ? { password: bootstrapHash } : {}),
         },
       });
       await prisma.profile.upsert({
@@ -498,6 +508,31 @@ async function main() {
       categories: homeContent.categories,
       instagramPosts: homeContent.instagramPosts,
     };
+
+    await prisma.websiteSetting.upsert({
+      where: { key: "site" },
+      create: {
+        key: "site",
+        label: "Site settings",
+        value: {
+          siteName: "MusafirCaffe",
+          supportEmail: "hello@musafircaffe.com",
+          defaultLocale: "en",
+        },
+      },
+      update: {},
+    });
+
+    await prisma.seoPage.upsert({
+      where: { path: "/" },
+      create: {
+        path: "/",
+        title: "MusafirCaffe — Coffee travel, cafés & guides",
+        description: "Discover destinations, cafés, and community guides for coffee travelers.",
+        noIndex: false,
+      },
+      update: {},
+    });
 
     await prisma.homepageContent.upsert({
       where: { key: "home" },

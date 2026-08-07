@@ -12,8 +12,18 @@ const NAV = [
   { href: `${ROUTES.admin}/community`, label: "Community" },
   { href: `${ROUTES.admin}/categories`, label: "Categories" },
   { href: `${ROUTES.admin}/tags`, label: "Tags" },
+  { href: `${ROUTES.admin}/countries`, label: "Countries" },
+  { href: `${ROUTES.admin}/cities`, label: "Cities" },
   { href: `${ROUTES.admin}/reviews`, label: "Reviews" },
   { href: `${ROUTES.admin}/media`, label: "Media" },
+  { href: `${ROUTES.admin}/homepage`, label: "Homepage" },
+  { href: `${ROUTES.admin}/seo`, label: "SEO" },
+  { href: `${ROUTES.admin}/settings`, label: "Settings" },
+  { href: `${ROUTES.admin}/contact`, label: "Contact" },
+  { href: `${ROUTES.admin}/newsletter`, label: "Newsletter" },
+  { href: `${ROUTES.admin}/notifications`, label: "Notifications" },
+  { href: `${ROUTES.admin}/payments`, label: "Payments" },
+  { href: `${ROUTES.admin}/affiliates`, label: "Affiliates" },
 ] as const;
 
 interface AdminShellProps {

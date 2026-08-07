@@ -54,6 +54,7 @@ export const destinationInputSchema = z.object({
   categoryId: z.string().uuid().nullable().optional(),
   coverImage: optionalUrl,
   tags: z.array(z.string()).default([]),
+  payload: z.string().max(500_000).optional(),
 });
 
 export const cafeInputSchema = z.object({
@@ -115,6 +116,7 @@ export const userInputSchema = z.object({
   role: userRoleSchema,
   emailVerified: z.boolean().optional().default(false),
   image: z.string().url().optional(),
+  password: z.string().min(8).max(128).optional(),
 });
 
 export const bulkActionSchema = z.object({
