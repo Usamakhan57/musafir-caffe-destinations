@@ -1,73 +1,90 @@
 "use client";
 
+import { FormEvent } from "react";
+import { Mail } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+
 import { FadeIn } from "@/shared/ui";
 
+const ease = [0.22, 1, 0.36, 1] as const;
+
 export function Newsletter() {
+  const prefersReducedMotion = useReducedMotion();
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+  }
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-forest-800 via-forest-700 to-coffee-800 py-24 sm:py-32">
-      <div className="texture-grain absolute inset-0" />
-
-      {/* Decorative blurs */}
-      <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-forest-400/10 blur-3xl" />
-      <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-gold-500/10 blur-3xl" />
-
-      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
+    <section
+      aria-labelledby="newsletter-heading"
+      className="bg-[#FAFAF9] py-16 sm:py-20 lg:py-24"
+    >
+      <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
         <FadeIn>
-          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-forest-300">
-            <span aria-hidden className="h-px w-8 bg-forest-400/60" />
-            Stay Connected
-            <span aria-hidden className="h-px w-8 bg-forest-400/60" />
-          </span>
-
-          <h2 className="mt-6 font-serif text-3xl leading-tight font-bold text-cream-50 sm:text-4xl lg:text-5xl">
-            Get Travel Inspiration
-            <br />
-            <span className="text-gold-400">Delivered Weekly</span>
-          </h2>
-
-          <p className="mt-6 text-lg leading-relaxed text-cream-200/80">
-            Join 86,000+ travelers receiving our weekly digest of hidden cafés,
-            destination guides, and community stories. No spam — just wanderlust.
-          </p>
-
-          {/* Email form */}
-          <form
-            className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-0"
-            onSubmit={(e) => e.preventDefault()}
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.55, ease }}
+            className="relative overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[#0F766E] px-6 py-14 text-center shadow-[0_30px_80px_-40px_rgba(15,118,110,0.55)] sm:px-10 sm:py-16 lg:px-16"
           >
-            <div className="flex flex-1 items-center rounded-full bg-cream-50/10 px-6 py-1 ring-1 ring-cream-200/15 transition-all focus-within:bg-cream-50/15 focus-within:ring-cream-200/30 sm:rounded-r-none">
-              <svg
-                className="mr-3 h-5 w-5 shrink-0 text-cream-300/50"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                />
-              </svg>
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="w-full bg-transparent py-4 text-sm text-cream-50 placeholder:text-cream-300/50 focus:outline-none"
-                aria-label="Email address for newsletter"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-full bg-gold-500 px-8 py-4 text-sm font-bold text-coffee-950 shadow-lg transition-all hover:bg-gold-400 hover:shadow-xl active:scale-[0.98] sm:rounded-l-none"
-            >
-              Subscribe
-            </button>
-          </form>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(20,184,166,0.35), transparent 60%), radial-gradient(ellipse 50% 40% at 100% 100%, rgba(245,158,11,0.2), transparent 50%)",
+              }}
+            />
 
-          <p className="mt-4 text-xs text-cream-300/50">
-            Free forever. Unsubscribe anytime. We respect your inbox.
-          </p>
+            <div className="relative mx-auto max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#99F6E4]">
+                Newsletter
+              </p>
+              <h2
+                id="newsletter-heading"
+                className="mt-3 font-serif text-3xl font-semibold leading-tight text-white sm:text-4xl"
+              >
+                Travel inspiration, delivered weekly
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-teal-50/85 sm:text-lg">
+                Hidden cafés, destination guides, and community stories — free,
+                curated, and easy to unsubscribe anytime.
+              </p>
+
+              <form
+                onSubmit={handleSubmit}
+                className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-stretch"
+                aria-label="Newsletter signup"
+              >
+                <label htmlFor="newsletter-email" className="sr-only">
+                  Email address
+                </label>
+                <div className="relative flex-1">
+                  <Mail
+                    className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]"
+                    aria-hidden
+                  />
+                  <input
+                    id="newsletter-email"
+                    type="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    placeholder="Enter your email"
+                    className="h-12 w-full rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-sm text-[#111827] outline-none ring-0 placeholder:text-[#6B7280] focus:ring-2 focus:ring-[#F59E0B] sm:h-14"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#F59E0B] px-6 text-sm font-semibold text-[#111827] transition hover:bg-[#D97706] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-14 sm:px-8"
+                >
+                  Subscribe
+                </button>
+              </form>
+            </div>
+          </motion.div>
         </FadeIn>
       </div>
     </section>

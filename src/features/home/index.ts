@@ -13,9 +13,13 @@ export {
   HeroStats,
   FeaturedDestinations,
   FeaturedCafes,
+  ExploreContinents,
   TravelGuides,
+  WhyMusafir,
+  DigitalNomad,
   AiTripPlanner,
   CommunityStories,
   Testimonials,
   Newsletter,
+  DownloadApp,
 } from "./components";
