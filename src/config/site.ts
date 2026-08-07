@@ -10,8 +10,12 @@ export const siteConfig = {
   name: APP_NAME,
   description: APP_DESCRIPTION,
   url: env.appUrl,
+  ogImage: `${env.appUrl}/musafircaffe-logo.png`,
   links: {
-    // External links (socials, etc.) go here.
+    facebook: "https://facebook.com/musafircaffe",
+    instagram: "https://instagram.com/musafircaffe",
+    x: "https://x.com/musafircaffe",
+    youtube: "https://youtube.com/@musafircaffe",
   },
 } as const;
 

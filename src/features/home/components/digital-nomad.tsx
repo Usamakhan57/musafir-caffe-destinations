@@ -83,10 +83,10 @@ export function DigitalNomad() {
               kind of atmosphere that makes deep work feel easy.
             </p>
             <Link
-              href={ROUTES.cafes}
+              href={ROUTES.digitalNomads}
               className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0F766E] transition hover:bg-[#FAFAF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Browse nomad-friendly cafés
+              Explore the nomad hub
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </FadeIn>

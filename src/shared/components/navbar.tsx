@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, Search, X } from "lucide-react";
 
@@ -18,11 +18,16 @@ const navLinks = [
   { label: "Dashboard", href: ROUTES.dashboard },
 ] as const;
 
+const joinFreeClassName =
+  "btn-ripple inline-flex h-[46px] items-center justify-center rounded-[18px] bg-gradient-to-r from-[#5C4033] via-[#6F4E37] to-[#8B6914] px-4 text-sm font-semibold text-white shadow-[0_14px_32px_-16px_rgba(92,64,51,0.65)] transition duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6F4E37] sm:px-5";
+
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -47,6 +52,17 @@ export function Navbar() {
   const isActive = (href: string) =>
     pathname === href || (href !== ROUTES.home && pathname.startsWith(`${href}/`));
 
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const q = searchQuery.trim();
+    closeMenus();
+    if (q) {
+      router.push(`${ROUTES.destinations}?q=${encodeURIComponent(q)}`);
+    } else {
+      router.push(ROUTES.destinations);
+    }
+  };
+
   return (
     <header
       className={cn(
@@ -61,12 +77,12 @@ export function Navbar() {
       </a>
 
       <nav
-        className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-5 sm:h-[78px] sm:px-8 lg:px-12"
+        className="mx-auto flex h-[76px] max-w-7xl items-center justify-between gap-3 px-4 sm:h-[88px] sm:gap-4 sm:px-8 lg:h-[96px] lg:px-12"
         aria-label="Primary"
       >
         <Link
           href={ROUTES.home}
-          className="flex min-w-0 items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
+          className="flex shrink-0 items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
           aria-label="MusafirCaffe home"
         >
           <Image
@@ -75,7 +91,7 @@ export function Navbar() {
             width={1536}
             height={1024}
             priority={true}
-            className="h-10 w-auto bg-transparent sm:h-[46px] lg:h-[52px]"
+            className="h-[54px] w-auto max-w-[min(52vw,220px)] object-contain object-left bg-transparent sm:h-[60px] sm:max-w-[260px] lg:h-[70px] lg:max-w-none"
           />
         </Link>
 
@@ -121,7 +137,7 @@ export function Navbar() {
                   className="relative"
                   role="search"
                   aria-label="Site search"
-                  onSubmit={(e) => e.preventDefault()}
+                  onSubmit={handleSearch}
                 >
                   <Search
                     className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]"
@@ -130,6 +146,8 @@ export function Navbar() {
                   <input
                     autoFocus
                     type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search destinations…"
                     className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-sm text-[#111827] outline-none placeholder:text-[#6B7280] focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20"
                     aria-label="Search"
@@ -139,7 +157,7 @@ export function Navbar() {
                 <button
                   key="search-btn"
                   type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#0F766E]/35 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
+                  className="inline-flex h-[46px] w-[46px] items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#0F766E]/35 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
                   aria-label="Open search"
                   onClick={() => setSearchOpen(true)}
                 >
@@ -149,30 +167,19 @@ export function Navbar() {
             </AnimatePresence>
           </div>
 
-          <button
-            type="button"
-            className="hidden h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] transition hover:border-[#0F766E]/35 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] sm:inline-flex sm:items-center"
-            aria-label="Language: English"
-          >
-            EN
-          </button>
-
           <Link
             href={ROUTES.login}
-            className="hidden h-10 items-center rounded-xl px-3.5 text-sm font-medium text-[#374151] transition hover:bg-[#0F766E]/8 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] sm:inline-flex"
+            className="hidden h-[46px] items-center rounded-xl px-3.5 text-sm font-medium text-[#374151] transition hover:bg-[#0F766E]/8 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] sm:inline-flex"
           >
-            Sign in
+            Sign In
           </Link>
-          <Link
-            href={ROUTES.register}
-            className="btn-ripple inline-flex h-10 items-center justify-center rounded-xl bg-[#0F766E] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(15,118,110,0.55)] transition hover:bg-[#0d5f59] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] sm:px-5"
-          >
-            Join free
+          <Link href={ROUTES.register} className={cn(joinFreeClassName, "shrink-0 px-3.5 sm:px-5")}>
+            Join Free
           </Link>
 
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:bg-[#FAFAF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] lg:hidden"
+            className="inline-flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:bg-[#FAFAF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E] lg:hidden"
             onClick={() => setIsMobileMenuOpen((v) => !v)}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-nav"
@@ -197,12 +204,12 @@ export function Navbar() {
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden border-t border-[#E5E7EB] bg-white/95 backdrop-blur-xl lg:hidden"
           >
-            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-4 pb-6 sm:px-8">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 pb-6 sm:px-8">
               <form
                 role="search"
                 aria-label="Mobile site search"
                 className="mb-2"
-                onSubmit={(e) => e.preventDefault()}
+                onSubmit={handleSearch}
               >
                 <label htmlFor="mobile-search" className="sr-only">
                   Search
@@ -215,6 +222,8 @@ export function Navbar() {
                   <input
                     id="mobile-search"
                     type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search destinations, cafés…"
                     className="h-12 w-full rounded-xl border border-[#E5E7EB] bg-[#FAFAF9] py-2 pl-10 pr-3 text-sm outline-none focus:border-[#0F766E] focus:bg-white focus:ring-2 focus:ring-[#0F766E]/20"
                   />
@@ -244,17 +253,17 @@ export function Navbar() {
               <div className="mt-2 grid grid-cols-2 gap-2 border-t border-[#E5E7EB] pt-4 sm:hidden">
                 <Link
                   href={ROUTES.login}
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#E5E7EB] px-4 text-sm font-medium text-[#111827]"
+                  className="inline-flex h-[46px] items-center justify-center rounded-[18px] border border-[#E5E7EB] px-4 text-sm font-medium text-[#111827]"
                   onClick={closeMenus}
                 >
-                  Sign in
+                  Sign In
                 </Link>
                 <Link
                   href={ROUTES.register}
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#0F766E] px-4 text-sm font-semibold text-white"
+                  className={cn(joinFreeClassName, "w-full")}
                   onClick={closeMenus}
                 >
-                  Join free
+                  Join Free
                 </Link>
               </div>
             </div>

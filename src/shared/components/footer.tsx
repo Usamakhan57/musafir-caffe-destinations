@@ -1,45 +1,52 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 
 import { APP_NAME, ROUTES } from "@/constants";
 
+const socialUrls = {
+  facebook: "https://facebook.com/musafircaffe",
+  instagram: "https://instagram.com/musafircaffe",
+  x: "https://x.com/musafircaffe",
+  youtube: "https://youtube.com/@musafircaffe",
+} as const;
+
 const footerSections = [
   {
-    title: "Destinations",
+    title: "Explore",
     links: [
-      { label: "Featured cities", href: ROUTES.destinations },
-      { label: "Cafés nearby", href: ROUTES.cafes },
-      { label: "Travel guides", href: ROUTES.guides },
-      { label: "Community trips", href: ROUTES.community },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Digital nomad tips", href: ROUTES.guides },
-      { label: "AI trip planner", href: ROUTES.dashboardPlanner },
-      { label: "Café owner hub", href: ROUTES.home },
-      { label: "Help center", href: ROUTES.home },
+      { label: "Destinations", href: ROUTES.destinations },
+      { label: "Cafés", href: ROUTES.cafes },
+      { label: "Guides", href: ROUTES.guides },
+      { label: "Community", href: ROUTES.community },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About MusafirCaffe", href: ROUTES.home },
-      { label: "Careers", href: ROUTES.home },
-      { label: "Press", href: ROUTES.home },
-      { label: "Partners", href: ROUTES.home },
+      { label: "About Us", href: ROUTES.about },
+      { label: "Contact", href: ROUTES.contact },
+      { label: "Careers", href: ROUTES.careers },
+      { label: "Press", href: ROUTES.press },
     ],
   },
   {
-    title: "Support",
+    title: "Resources",
     links: [
-      { label: "Contact", href: ROUTES.home },
-      { label: "Privacy policy", href: ROUTES.home },
-      { label: "Terms of service", href: ROUTES.home },
-      { label: "Accessibility", href: ROUTES.home },
+      { label: "Travel Tips", href: ROUTES.travelTips },
+      { label: "Digital Nomads", href: ROUTES.digitalNomads },
+      { label: "FAQ", href: ROUTES.faq },
+      { label: "Help Center", href: ROUTES.help },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", href: ROUTES.privacy },
+      { label: "Terms", href: ROUTES.terms },
+      { label: "Cookies", href: ROUTES.cookies },
     ],
   },
 ] as const;
@@ -70,41 +77,43 @@ function FacebookIcon() {
   );
 }
 
-function LinkedInIcon() {
+function YouTubeIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S.02 4.88.02 3.5 1.14 1 2.5 1s2.48 1.12 2.48 2.5zM.24 8.25h4.52V23H.24V8.25zM8.34 8.25h4.33v2.01h.06c.6-1.14 2.08-2.34 4.28-2.34 4.58 0 5.42 3.01 5.42 6.93V23h-4.52v-6.74c0-1.61-.03-3.68-2.24-3.68-2.24 0-2.58 1.75-2.58 3.56V23H8.34V8.25z" />
+      <path d="M23.5 6.2a3.05 3.05 0 0 0-2.15-2.16C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.35.54A3.05 3.05 0 0 0 .5 6.2 31.9 31.9 0 0 0 0 12a31.9 31.9 0 0 0 .5 5.8 3.05 3.05 0 0 0 2.15 2.16C4.5 20.5 12 20.5 12 20.5s7.5 0 9.35-.54a3.05 3.05 0 0 0 2.15-2.16A31.9 31.9 0 0 0 24 12a31.9 31.9 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z" />
     </svg>
   );
 }
 
 const socialLinks = [
-  { label: "Instagram", href: "https://instagram.com", icon: InstagramIcon },
-  { label: "X", href: "https://x.com", icon: XIcon },
-  { label: "Facebook", href: "https://facebook.com", icon: FacebookIcon },
-  { label: "LinkedIn", href: "https://linkedin.com", icon: LinkedInIcon },
+  { label: "Facebook", href: socialUrls.facebook, icon: FacebookIcon },
+  { label: "Instagram", href: socialUrls.instagram, icon: InstagramIcon },
+  { label: "X", href: socialUrls.x, icon: XIcon },
+  { label: "YouTube", href: socialUrls.youtube, icon: YouTubeIcon },
 ] as const;
 
 export function Footer() {
   return (
     <footer className="border-t border-[#E5E7EB] bg-[#111827] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 sm:py-20 lg:px-12">
-        <div className="grid gap-12 lg:grid-cols-[1.35fr_repeat(4,1fr)] lg:gap-8">
+      <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20 lg:px-12">
+        <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))] lg:gap-8">
           <div className="flex flex-col gap-5">
-            <Link href={ROUTES.home} className="flex items-center gap-3 text-white">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0F766E] text-lg font-semibold text-white">
-                M
-              </span>
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#14B8A6]">
-                  {APP_NAME}
-                </p>
-                <p className="text-xs text-white/60">Travel · Coffee · Community</p>
-              </div>
+            <Link
+              href={ROUTES.home}
+              className="inline-flex w-fit items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6]"
+              aria-label="MusafirCaffe home"
+            >
+              <Image
+                src="/musafircaffe-logo.png"
+                alt="MusafirCaffe"
+                width={1536}
+                height={1024}
+                className="h-12 w-auto bg-transparent object-contain sm:h-14"
+              />
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-white/65">
               Discover destinations, cafés, and travel stories from a global
-              community of curious wanderers.
+              community of curious wanderers — where every journey starts with a cup.
             </p>
 
             <form
@@ -138,6 +147,9 @@ export function Footer() {
             </form>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
+              <p className="mr-1 w-full text-xs font-semibold uppercase tracking-[0.2em] text-[#14B8A6] sm:w-auto">
+                Social
+              </p>
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (

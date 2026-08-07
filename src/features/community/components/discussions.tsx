@@ -1,6 +1,14 @@
+import Link from "next/link";
+
+import { ROUTES } from "@/constants";
 import { SectionHeading } from "@/shared/ui";
 
-const TOPICS = ["Introductions", "Local Tips", "Photo Share", "Events & Meetups"];
+const TOPICS = [
+  { label: "Introductions", href: ROUTES.register },
+  { label: "Local Tips", href: ROUTES.travelTips },
+  { label: "Photo Share", href: ROUTES.community },
+  { label: "Events & Meetups", href: ROUTES.community },
+] as const;
 
 export default function DiscussionCategories() {
   return (
@@ -12,15 +20,15 @@ export default function DiscussionCategories() {
         align="left"
       />
 
-      <div className="mt-8 flex flex-wrap gap-4">
+      <div className="mt-8 flex flex-wrap gap-3 sm:gap-4">
         {TOPICS.map((topic) => (
-          <button
-            key={topic}
-            type="button"
+          <Link
+            key={topic.label}
+            href={topic.href}
             className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-coffee-700 shadow-sm transition hover:border-[#2563EB] hover:bg-[#EFF6FF]"
           >
-            {topic}
-          </button>
+            {topic.label}
+          </Link>
         ))}
       </div>
     </section>

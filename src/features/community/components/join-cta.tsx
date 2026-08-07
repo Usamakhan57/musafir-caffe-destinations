@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { ROUTES } from "@/constants";
+
 export default function JoinCTA() {
   return (
     <section className="mt-12 mb-24">
@@ -13,9 +17,12 @@ export default function JoinCTA() {
           <div className="rounded-[28px] bg-white/10 p-6 backdrop-blur-sm sm:p-8">
             <div className="text-sm font-semibold text-white">Ready to connect?</div>
             <p className="mt-3 text-sm text-slate-200/90">Sign up and start contributing to the world’s most active travel community.</p>
-            <button className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-sm font-semibold text-[#2563EB] transition hover:bg-slate-100">
+            <Link
+              href={ROUTES.register}
+              className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-sm font-semibold text-[#2563EB] transition hover:bg-slate-100"
+            >
               Join now
-            </button>
+            </Link>
           </div>
         </div>
       </div>
