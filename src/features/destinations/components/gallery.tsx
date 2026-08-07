@@ -54,6 +54,7 @@ export function Gallery({ images }: GalleryProps) {
               fill
               sizes="(max-width: 640px) 50vw, 25vw"
               className="object-cover"
+              loading="lazy"
             />
           </button>
         ))}

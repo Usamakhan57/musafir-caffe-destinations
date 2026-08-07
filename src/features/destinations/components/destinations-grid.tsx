@@ -23,7 +23,7 @@ export function DestinationsGrid({ destinations }: DestinationsGridProps) {
 
   return (
     <StaggerContainer
-      className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"
+      className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
       staggerDelay={0.08}
     >
       {destinations.map((destination, index) => (

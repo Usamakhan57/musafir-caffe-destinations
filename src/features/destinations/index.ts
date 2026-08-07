@@ -12,6 +12,7 @@ export {
   DestinationCard,
   DestinationsGrid,
   DestinationsToolbar,
+  DestinationsListingHero,
   PaginationControls,
   DestinationHero,
   Gallery,
@@ -21,6 +22,19 @@ export {
   NearbyDestinationsSection,
   ReviewsSection,
   DetailCta,
+  ShareButtons,
+  OverviewSection,
+  HistorySection,
+  CoffeeCultureSection,
+  AttractionsSection,
+  LocalFoodsSection,
+  BestTimeSection,
+  WeatherSection,
+  BudgetEstimatorSection,
+  TransportationSection,
+  MapPlaceholderSection,
+  FaqSection,
+  RelatedGuidesSection,
 } from "./components";
 
 export {
@@ -42,7 +56,10 @@ export {
 
 export type {
   Region,
+  Continent,
   Category,
+  Season,
+  CoffeeCulture,
   SortOption,
   PriceLevel,
   DestinationSummary,
@@ -55,6 +72,20 @@ export type {
   TravelTip,
   Activity,
   Review,
+  LocalFood,
+  Attraction,
+  WeatherMonth,
+  BudgetBreakdown,
+  TransportOption,
+  FaqItem,
+  RelatedGuide,
+  MapPlaceholder,
 } from "./types";
 
-export { REGIONS, CATEGORIES, SORT_OPTIONS } from "./types";
+export {
+  REGIONS,
+  CATEGORIES,
+  SORT_OPTIONS,
+  SEASONS,
+  COFFEE_CULTURES,
+} from "./types";
