@@ -11,6 +11,10 @@ import {
   DownloadApp,
 } from "@/features/home";
 
+/** Temporarily disable static homepage caching so production always serves the latest Hero/UI. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col bg-[#FAFAF9]">
