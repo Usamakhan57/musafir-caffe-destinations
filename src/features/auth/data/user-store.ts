@@ -158,7 +158,12 @@ export async function verifyPassword(
   plaintext: string,
   hashed: string,
 ): Promise<boolean> {
-  return compare(plaintext, hashed);
+  if (!plaintext || !hashed) return false;
+  try {
+    return await compare(plaintext, hashed);
+  } catch {
+    return false;
+  }
 }
 
 export async function markEmailVerified(email: string): Promise<boolean> {

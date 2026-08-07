@@ -70,9 +70,23 @@ function createEnv(): EnvConfig {
       "http://localhost:3000/api",
     ),
     authSecret: resolveString("AUTH_SECRET", process.env.AUTH_SECRET, "development-secret"),
-    authUrl: resolveString("AUTH_URL", process.env.AUTH_URL, "http://localhost:3000"),
-    databaseUrl: resolveString("DATABASE_URL", process.env.DATABASE_URL),
-    directUrl: resolveString("DIRECT_URL", process.env.DIRECT_URL, process.env.DATABASE_URL),
+    authUrl: resolveString(
+      "AUTH_URL",
+      process.env.AUTH_URL,
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    ),
+    // Prefer real DATABASE_URL; empty string keeps build-time imports from crashing
+    // when the env module loads before secrets are injected (Hostinger cold start).
+    databaseUrl: resolveString(
+      "DATABASE_URL",
+      process.env.DATABASE_URL,
+      process.env.DATABASE_URL ? undefined : "",
+    ),
+    directUrl: resolveString(
+      "DIRECT_URL",
+      process.env.DIRECT_URL,
+      process.env.DATABASE_URL ?? "",
+    ),
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     githubClientId: process.env.GITHUB_CLIENT_ID,

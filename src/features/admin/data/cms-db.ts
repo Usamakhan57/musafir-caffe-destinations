@@ -954,7 +954,7 @@ export async function dbCreateUser(
   input: Omit<CmsUserRecord, "id" | "createdAt" | "updatedAt"> & { password?: string },
 ) {
   if (!(await requireDb())) throw new Error("Database unavailable");
-  const passwordHash = input.password ? await hash(input.password, 12) : null;
+  const passwordHash = input.password ? await hash(input.password, 12) : "";
   const created = await prisma.user.create({
     data: {
       name: input.name,

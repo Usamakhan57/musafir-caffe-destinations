@@ -10,6 +10,7 @@ import {
   findOrCreateOAuthUser,
   findUserById,
 } from "@/features/auth/data/user-store";
+import { ensureBootstrapAdmin, BOOTSTRAP_ADMIN_EMAIL } from "@/features/auth/data/ensure-admin";
 import type { UserRole, UserPreferences } from "@/features/auth/types";
 
 interface AuthUserWithPreferences {
@@ -65,6 +66,8 @@ declare module "@auth/core/jwt" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Required behind Hostinger / CDN reverse proxies.
+  trustHost: true,
   pages: {
     signIn: "/login",
     error: "/login",
@@ -100,20 +103,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await findUserByEmail(email);
-        if (!user) return null;
+        try {
+          // Heal production bootstrap admin if seed never ran or password is missing.
+          // Force on the bootstrap email so an empty/wrong hash is repaired even when
+          // an earlier in-process ensure cached a stale "unchanged" result.
+          const normalizedEmail = email.toLowerCase().trim();
+          await ensureBootstrapAdmin({
+            force: normalizedEmail === BOOTSTRAP_ADMIN_EMAIL,
+          });
 
-        const valid = await verifyPassword(password, user.password);
-        if (!valid) return null;
+          let user = await findUserByEmail(normalizedEmail);
+          if (!user) return null;
+          if (!user.password) return null;
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image ?? null,
-          role: user.role,
-          remember: credentials?.remember === "on" || credentials?.remember === "true",
-        };
+          let valid = await verifyPassword(password, user.password);
+          if (!valid && normalizedEmail === BOOTSTRAP_ADMIN_EMAIL) {
+            await ensureBootstrapAdmin({ force: true });
+            user = await findUserByEmail(normalizedEmail);
+            if (!user?.password) return null;
+            valid = await verifyPassword(password, user.password);
+          }
+          if (!valid) return null;
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image ?? null,
+            role: user.role,
+            remember:
+              credentials?.remember === "on" || credentials?.remember === "true",
+          };
+        } catch (error) {
+          console.error("[auth] credentials authorize failed:", error);
+          return null;
+        }
       },
     }),
   ],

@@ -275,11 +275,9 @@ async function main() {
     const bootstrapHash = await hash(bootstrapPassword, 12);
 
     for (const user of cms.users) {
-      const existing = await prisma.user.findUnique({ where: { email: user.email } });
-      const shouldSetPassword =
-        user.email === "admin@musafircaffe.com" && (!existing || !existing.password);
+      const isBootstrapAdmin = user.email === "admin@musafircaffe.com";
 
-      await prisma.user.upsert({
+      const upserted = await prisma.user.upsert({
         where: { email: user.email },
         create: {
           id: user.id,
@@ -288,19 +286,21 @@ async function main() {
           role: mapRole(user.role),
           emailVerified: user.emailVerified,
           image: user.image ?? null,
-          password: user.email === "admin@musafircaffe.com" ? bootstrapHash : null,
+          password: isBootstrapAdmin ? bootstrapHash : "",
         },
         update: {
           name: user.name,
           role: mapRole(user.role),
           emailVerified: user.emailVerified,
-          ...(shouldSetPassword ? { password: bootstrapHash } : {}),
+          // Always re-sync bootstrap admin password so production recoveries stick
+          // even when an older seed left a null/wrong hash in place.
+          ...(isBootstrapAdmin ? { password: bootstrapHash } : {}),
         },
       });
       await prisma.profile.upsert({
-        where: { userId: user.id },
+        where: { userId: upserted.id },
         create: {
-          userId: user.id,
+          userId: upserted.id,
           displayName: user.name,
         },
         update: { displayName: user.name },
@@ -553,6 +553,43 @@ async function main() {
       offers: offers.length,
       helpArticles: helpArticles.length,
     });
+
+    // Final guarantee: bootstrap admin always has a working password hash,
+    // even if earlier upserts skipped it or the fixture email mismatched.
+    const adminEmail = "admin@musafircaffe.com";
+    const admin = await prisma.user.findUnique({ where: { email: adminEmail } });
+    if (!admin) {
+      await prisma.user.create({
+        data: {
+          name: "Amina Admin",
+          email: adminEmail,
+          password: bootstrapHash,
+          role: "admin",
+          emailVerified: true,
+          preferences: { create: {} },
+          profile: { create: { displayName: "Amina Admin" } },
+        },
+      });
+      console.log("Created missing bootstrap admin");
+    } else {
+      const { compare } = await import("bcryptjs");
+      const valid =
+        Boolean(admin.password) &&
+        (await compare(bootstrapPassword, admin.password!));
+      if (!valid || admin.role !== "admin") {
+        await prisma.user.update({
+          where: { id: admin.id },
+          data: {
+            password: bootstrapHash,
+            role: "admin",
+            emailVerified: true,
+          },
+        });
+        console.log("Repaired bootstrap admin password/role");
+      } else {
+        console.log("Bootstrap admin password verified OK");
+      }
+    }
   } finally {
     await prisma.$disconnect();
   }

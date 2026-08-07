@@ -58,7 +58,7 @@ model User {
   id                      String                   @id @default(uuid())
   name                    String
   email                   String                   @unique
-  password                String?
+  password                String                   @default("")
   image                   String?
   role                    UserRole                 @default(traveler)
   emailVerified           Boolean                  @default(false)
