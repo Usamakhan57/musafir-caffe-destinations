@@ -9,6 +9,8 @@
  */
 export {
   Hero,
+  PremiumCards,
+  HeroStats,
   FeaturedDestinations,
   FeaturedCafes,
   TravelGuides,

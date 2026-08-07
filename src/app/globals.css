@@ -33,9 +33,18 @@
   --color-gold-500: #c49a3d;
   --color-gold-600: #b08a30;
 
+  /* Brand palette — MusafirCaffe premium */
+  --color-brand-primary: #0f4c5c;
+  --color-brand-secondary: #d4a017;
+  --color-brand-accent: #2e8b57;
+  --color-brand-bg: #fcfaf7;
+  --color-brand-card: #ffffff;
+  --color-brand-text: #111827;
+  --color-brand-muted: #6b7280;
+
   /* Typography */
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
 
   /* Brand shadows */
   --shadow-warm: 0 20px 45px -18px rgb(66 45 26 / 0.28);
