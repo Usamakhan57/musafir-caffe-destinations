@@ -4,6 +4,8 @@ import type {
   FilterOptions,
   Region,
 } from "../types";
+import { enrichDestination, type RawDestination } from "./enrich-destination";
+import { COFFEE_CULTURES, SEASONS } from "../types";
 
 /**
  * In-memory destinations catalog.
@@ -13,7 +15,7 @@ import type {
  * callers never touch `destinations` directly, so swapping this file's
  * internals for Prisma queries later won't require touching call sites.
  */
-const destinations: DestinationDetail[] = [
+const destinations: RawDestination[] = [
   {
     slug: "addis-ababa",
     name: "Addis Ababa",
@@ -1525,14 +1527,19 @@ const destinations: DestinationDetail[] = [
 
 // ── Public API ──────────────────────────────────────────────────
 
+function allEnriched(): DestinationDetail[] {
+  return destinations.map(enrichDestination);
+}
+
 export async function getAllDestinations(): Promise<DestinationDetail[]> {
-  return destinations;
+  return allEnriched();
 }
 
 export async function getDestinationBySlug(
   slug: string,
 ): Promise<DestinationDetail | undefined> {
-  return destinations.find((destination) => destination.slug === slug);
+  const raw = destinations.find((destination) => destination.slug === slug);
+  return raw ? enrichDestination(raw) : undefined;
 }
 
 export async function getDestinationSlugs(): Promise<string[]> {
@@ -1543,15 +1550,36 @@ export async function getNearbyDestinations(
   slugs: readonly string[],
 ): Promise<DestinationDetail[]> {
   const set = new Set(slugs);
-  return destinations.filter((destination) => set.has(destination.slug));
+  return destinations
+    .filter((destination) => set.has(destination.slug))
+    .map(enrichDestination);
 }
 
 export function getFilterOptions(): FilterOptions {
-  const countries = Array.from(new Set(destinations.map((d) => d.country))).sort();
-  const regions = Array.from(new Set(destinations.map((d) => d.region))).sort() as Region[];
+  const enriched = allEnriched();
+  const countries = Array.from(new Set(enriched.map((d) => d.country))).sort();
+  const cities = Array.from(new Set(enriched.map((d) => d.city))).sort();
+  const regions = Array.from(new Set(enriched.map((d) => d.region))).sort() as Region[];
   const categories = Array.from(
-    new Set(destinations.map((d) => d.category)),
+    new Set(enriched.map((d) => d.category)),
   ).sort() as Category[];
+  const budgets = Array.from(new Set(enriched.map((d) => d.priceLevel))).sort(
+    (a, b) => a.length - b.length,
+  );
+  const seasons = [...SEASONS];
+  const coffeeCultures = Array.from(
+    new Set(enriched.map((d) => d.coffeeCulture)),
+  ).sort() as FilterOptions["coffeeCultures"][number][];
 
-  return { countries, regions, categories };
+  return {
+    countries,
+    cities,
+    regions,
+    budgets,
+    seasons: seasons.filter((season) =>
+      enriched.some((d) => d.seasons.includes(season)),
+    ),
+    coffeeCultures: coffeeCultures.length ? coffeeCultures : [...COFFEE_CULTURES],
+    categories,
+  };
 }

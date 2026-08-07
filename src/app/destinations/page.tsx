@@ -1,9 +1,9 @@
 import { createPageMetadata } from "@/shared/lib/seo";
 import { ROUTES } from "@/constants";
 import { Breadcrumbs } from "@/shared/components";
-import { SectionHeading } from "@/shared/ui";
 import {
   DestinationsGrid,
+  DestinationsListingHero,
   DestinationsToolbar,
   PaginationControls,
   getAllDestinations,
@@ -18,7 +18,7 @@ import {
 export const metadata = createPageMetadata({
   title: "Destinations",
   description:
-    "Browse coffee towns and travel destinations around the world — search by name, filter by region, country, or category, and find your next trip.",
+    "Browse premium coffee cities and travel destinations — filter by continent, country, city, budget, season, coffee culture, and digital-nomad friendliness.",
   path: ROUTES.destinations,
 });
 
@@ -39,18 +39,18 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
 
   return (
     <main className="flex flex-1 flex-col overflow-x-hidden bg-[#FAFAF9]">
+      <DestinationsListingHero />
+
       <section className="mx-auto w-full max-w-7xl px-5 pb-8 pt-10 sm:px-8 sm:pt-12 lg:px-12">
         <Breadcrumbs items={[{ label: "Destinations" }]} />
-        <SectionHeading
-          eyebrow="Explore"
-          title="Destinations worth a long coffee stop"
-          description="Coffee towns, cultural capitals, and quiet retreats — search, filter, and find where your next trip should take you. Every listing is written for travelers who care about place, pace, and a great cup."
-          align="left"
-        />
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-8 sm:pb-24 lg:px-12">
-        <DestinationsToolbar filters={{ ...filters, page }} options={filterOptions} resultCount={filtered.length} />
+        <DestinationsToolbar
+          filters={{ ...filters, page }}
+          options={filterOptions}
+          resultCount={filtered.length}
+        />
 
         <div className="mt-10">
           <DestinationsGrid destinations={items} />
