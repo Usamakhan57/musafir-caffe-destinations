@@ -1,4 +1,5 @@
 import { RatingStars } from "@/features/destinations";
+import { ReviewForm } from "@/features/reviews";
 
 import type { CafeDetail } from "../types";
 
@@ -30,6 +31,7 @@ export function ReviewsSection({ cafe }: ReviewsSectionProps) {
           </article>
         ))}
       </div>
+      <ReviewForm targetType="cafe" targetId={cafe.slug} targetName={cafe.name} />
     </section>
   );
 }

@@ -17,3 +17,5 @@ export {
   ContentCta,
   ProseSection,
 } from "./marketing";
+export { JsonLd } from "./json-ld";
+export { PwaRegister } from "./pwa-register";
