@@ -1,29 +1,29 @@
 import {
   Hero,
-  PremiumCards,
-  HeroStats,
   FeaturedDestinations,
   FeaturedCafes,
+  ExploreContinents,
   TravelGuides,
-  AiTripPlanner,
+  WhyMusafir,
+  DigitalNomad,
   CommunityStories,
-  Testimonials,
   Newsletter,
+  DownloadApp,
 } from "@/features/home";
 
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col bg-[#FCFAF7]">
+    <main className="flex flex-1 flex-col bg-[#FAFAF9]">
       <Hero />
-      <PremiumCards />
-      <HeroStats />
       <FeaturedDestinations />
       <FeaturedCafes />
+      <ExploreContinents />
       <TravelGuides />
-      <AiTripPlanner />
+      <WhyMusafir />
+      <DigitalNomad />
       <CommunityStories />
-      <Testimonials />
       <Newsletter />
+      <DownloadApp />
     </main>
   );
 }

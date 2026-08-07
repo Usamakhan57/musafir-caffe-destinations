@@ -33,14 +33,15 @@
   --color-gold-500: #c49a3d;
   --color-gold-600: #b08a30;
 
-  /* Brand palette — MusafirCaffe premium */
-  --color-brand-primary: #0f4c5c;
-  --color-brand-secondary: #d4a017;
-  --color-brand-accent: #2e8b57;
-  --color-brand-bg: #fcfaf7;
+  /* Brand palette — MusafirCaffe premium (homepage) */
+  --color-brand-primary: #0f766e;
+  --color-brand-secondary: #14b8a6;
+  --color-brand-accent: #f59e0b;
+  --color-brand-bg: #fafaf9;
   --color-brand-card: #ffffff;
   --color-brand-text: #111827;
   --color-brand-muted: #6b7280;
+  --color-brand-border: #e5e7eb;
 
   /* Typography */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
