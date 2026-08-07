@@ -8,12 +8,10 @@ import type { ProxyHandler } from "./chain";
  * Routes listed here require authentication.
  * Role-based routes require the user to have the specified role.
  */
-const PROTECTED_ROUTES = ["/profile", "/dashboard", "/community", "/guides", "/cafes"] as const;
+/** Auth-gated app surfaces only — public marketing pages stay open. */
+const PROTECTED_ROUTES = ["/profile", "/dashboard"] as const;
 const ROLE_PROTECTED_ROUTES = {
   admin: ["/admin"],
-  "cafe-owner": ["/cafes"],
-  "guide-creator": ["/guides"],
-  traveler: ["/community"],
 } as const;
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
 

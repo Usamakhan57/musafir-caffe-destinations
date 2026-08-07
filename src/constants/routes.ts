@@ -28,6 +28,17 @@ export const ROUTES = {
   cafes: "/cafes",
   guides: "/guides",
   community: "/community",
+  about: "/about",
+  contact: "/contact",
+  careers: "/careers",
+  press: "/press",
+  faq: "/faq",
+  privacy: "/privacy",
+  terms: "/terms",
+  cookies: "/cookies",
+  travelTips: "/travel-tips",
+  digitalNomads: "/digital-nomads",
+  help: "/help",
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];

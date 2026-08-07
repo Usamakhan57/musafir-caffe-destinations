@@ -1,6 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Bookmark } from "lucide-react";
 
+import { ROUTES } from "@/constants";
 import { FadeIn } from "@/shared/ui";
 
 export type Guide = {
@@ -19,7 +21,7 @@ export default function GuideCard({ guide }: { guide: Guide }) {
   return (
     <FadeIn>
       <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_16px_40px_-28px_rgba(15,118,110,0.25)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-28px_rgba(15,118,110,0.35)]">
-        <div className="relative overflow-hidden">
+        <Link href={ROUTES.travelTips} className="relative overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]">
           <div className="absolute right-4 top-4 z-10 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#111827] shadow-sm">
             {guide.readTime}
           </div>
@@ -32,20 +34,22 @@ export default function GuideCard({ guide }: { guide: Guide }) {
               className="object-cover transition duration-700 group-hover:scale-105"
             />
           </div>
-        </div>
+        </Link>
 
         <div className="flex flex-1 flex-col space-y-4 p-5">
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-serif text-lg font-semibold leading-snug text-[#111827] transition group-hover:text-[#0F766E]">
-              {guide.title}
+              <Link href={ROUTES.travelTips} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]">
+                {guide.title}
+              </Link>
             </h3>
-            <button
-              type="button"
-              aria-label="Bookmark guide"
+            <Link
+              href={ROUTES.register}
+              aria-label="Save guide — join free"
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#0F766E]/30 hover:text-[#0F766E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F766E]"
             >
               <Bookmark className="h-4 w-4" aria-hidden />
-            </button>
+            </Link>
           </div>
 
           <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-[#6B7280]">

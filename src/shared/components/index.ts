@@ -8,3 +8,12 @@
 export { Navbar } from "./navbar";
 export { Footer } from "./footer";
 export { OfflinePage } from "./offline-page";
+export { Breadcrumbs } from "./breadcrumbs";
+export type { BreadcrumbItem } from "./breadcrumbs";
+export {
+  MarketingHero,
+  ContentCard,
+  ContentGrid,
+  ContentCta,
+  ProseSection,
+} from "./marketing";

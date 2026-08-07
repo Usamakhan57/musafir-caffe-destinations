@@ -6,7 +6,7 @@ import { ErrorState } from "@/shared/ui";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-[#FAFAF9] px-5 py-20 sm:px-8 sm:py-28">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-[#FAFAF9] px-5 py-20 sm:px-8 sm:py-28">
       <ErrorState
         code="404"
         title="This page wandered off"
@@ -15,9 +15,29 @@ export default function NotFound() {
         primaryHref={ROUTES.home}
         primaryLabel="Back to home"
       />
-      <div className="sr-only">
-        <Link href={ROUTES.destinations}>Browse destinations</Link>
-      </div>
+      <nav aria-label="Helpful links" className="flex flex-wrap items-center justify-center gap-3 text-sm">
+        <Link href={ROUTES.destinations} className="font-medium text-[#0F766E] hover:underline">
+          Destinations
+        </Link>
+        <span className="text-[#D1D5DB]" aria-hidden>
+          ·
+        </span>
+        <Link href={ROUTES.cafes} className="font-medium text-[#0F766E] hover:underline">
+          Cafés
+        </Link>
+        <span className="text-[#D1D5DB]" aria-hidden>
+          ·
+        </span>
+        <Link href={ROUTES.guides} className="font-medium text-[#0F766E] hover:underline">
+          Guides
+        </Link>
+        <span className="text-[#D1D5DB]" aria-hidden>
+          ·
+        </span>
+        <Link href={ROUTES.help} className="font-medium text-[#0F766E] hover:underline">
+          Help Center
+        </Link>
+      </nav>
     </div>
   );
 }
