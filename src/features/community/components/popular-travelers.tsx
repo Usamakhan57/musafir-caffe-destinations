@@ -1,6 +1,6 @@
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
-import { getPopularTravelers } from "../data/community-store";
+import { getPopularTravelers } from "../data/community-loader";
 import { TravelerMiniCard } from "./traveler-card";
 
 export async function PopularTravelersSection() {

@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 
 import { siteConfig } from "@/config";
 import { communityTravelerRoute } from "@/constants";
+import { TravelerProfile } from "@/features/community";
 import {
-  TravelerProfile,
   getAllTravelers,
   getStoriesByAuthor,
   getTravelerBySlug,
-} from "@/features/community";
+} from "@/features/community/data/community-loader";
 
 interface TravelerPageProps {
   params: Promise<{ slug: string }>;

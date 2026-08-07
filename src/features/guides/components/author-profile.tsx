@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Globe, Share2 } from "lucide-react";
 
 import { cafeRoute, destinationRoute, ROUTES } from "@/constants";
-import { getCafeBySlug } from "@/features/cafes";
-import { getDestinationBySlug } from "@/features/destinations";
+import { getCafeBySlug } from "@/features/cafes/data/cafes-loader";
+import { getDestinationBySlug } from "@/features/destinations/data/destinations-loader";
 import { Breadcrumbs } from "@/shared/components";
 import { SectionHeading, StaggerContainer, StaggerItem } from "@/shared/ui";
 
@@ -12,7 +12,7 @@ import {
   getAuthorBySlug,
   getAuthorForGuide,
   getGuidesByAuthor,
-} from "../data/guides-store";
+} from "../data/guides-loader";
 import GuideCard from "./guide-card";
 
 interface AuthorProfileProps {

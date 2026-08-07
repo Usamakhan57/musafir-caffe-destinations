@@ -23,10 +23,12 @@ import {
   MapPlaceholderSection,
   FaqSection,
   RelatedGuidesSection,
+} from "@/features/destinations";
+import {
   getDestinationBySlug,
   getDestinationSlugs,
   getNearbyDestinations,
-} from "@/features/destinations";
+} from "@/features/destinations/data/destinations-loader";
 
 interface DestinationPageProps {
   params: Promise<{ slug: string }>;

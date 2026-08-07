@@ -1005,42 +1005,42 @@ const stories: CommunityStory[] = [
   },
 ];
 
-export async function getAllStories(): Promise<CommunityStory[]> {
+export function getAllStories(): CommunityStory[] {
   return [...stories];
 }
 
-export async function getStoryBySlug(slug: string): Promise<CommunityStory | null> {
+export function getStoryBySlug(slug: string): CommunityStory | null {
   return stories.find((story) => story.slug === slug) ?? null;
 }
 
-export async function getStorySlugs(): Promise<string[]> {
+export function getStorySlugs(): string[] {
   return stories.map((story) => story.slug);
 }
 
-export async function getStoriesBySlugs(slugs: readonly string[]): Promise<CommunityStory[]> {
+export function getStoriesBySlugs(slugs: readonly string[]): CommunityStory[] {
   const set = new Set(slugs);
   return stories.filter((story) => set.has(story.slug));
 }
 
-export async function getFeaturedStories(): Promise<CommunityStory[]> {
+export function getFeaturedStories(): CommunityStory[] {
   return stories.filter((story) => story.featured);
 }
 
-export async function getTrendingPosts(): Promise<CommunityStory[]> {
+export function getTrendingPosts(): CommunityStory[] {
   return stories.filter((story) => story.trending);
 }
 
-export async function getLatestPosts(limit = 8): Promise<CommunityStory[]> {
+export function getLatestPosts(limit = 8): CommunityStory[] {
   return [...stories]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, limit);
 }
 
-export async function getWeeklyHighlights(): Promise<CommunityStory[]> {
+export function getWeeklyHighlights(): CommunityStory[] {
   return stories.filter((story) => story.weeklyHighlight);
 }
 
-export async function getStoriesByAuthor(authorSlug: string): Promise<CommunityStory[]> {
+export function getStoriesByAuthor(authorSlug: string): CommunityStory[] {
   return stories.filter((story) => story.authorSlug === authorSlug);
 }
 
@@ -1052,11 +1052,15 @@ export function getTravelerBySlug(slug: string): Traveler | undefined {
   return TRAVELERS.find((traveler) => traveler.slug === slug);
 }
 
-export async function getPopularTravelers(limit = 6): Promise<Traveler[]> {
+export function getPopularTravelers(limit = 6): Traveler[] {
   return [...TRAVELERS]
     .sort((a, b) => Number(b.featured) - Number(a.featured) || b.followers - a.followers)
     .slice(0, limit);
 }
+
+/** Seed export for DB seeding / server fallbacks. */
+export const COMMUNITY_POSTS = stories;
+export const COMMUNITY_TRAVELERS = TRAVELERS;
 
 export function getTravelerForStory(story: CommunityStory): Traveler | undefined {
   return getTravelerBySlug(story.authorSlug);

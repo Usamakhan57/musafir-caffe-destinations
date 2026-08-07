@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ROUTES } from "@/constants";
 import { FadeIn } from "@/shared/ui";
 
-import { getAllGuides, getGuideFilterOptions } from "../data/guides-store";
+import { getAllGuides, getGuideFilterOptions } from "../data/guides-loader";
 
 export default async function GuidesHero() {
   const guides = await getAllGuides();

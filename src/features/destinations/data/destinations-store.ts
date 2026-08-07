@@ -1525,35 +1525,35 @@ const destinations: RawDestination[] = [
   },
 ];
 
-// ── Public API ──────────────────────────────────────────────────
+// ── Public API (static seed; production reads via server catalog loaders) ─
 
 function allEnriched(): DestinationDetail[] {
   return destinations.map(enrichDestination);
 }
 
-export async function getAllDestinations(): Promise<DestinationDetail[]> {
+export function getAllDestinations(): DestinationDetail[] {
   return allEnriched();
 }
 
-export async function getDestinationBySlug(
+export function getDestinationBySlug(
   slug: string,
-): Promise<DestinationDetail | undefined> {
+): DestinationDetail | undefined {
   const raw = destinations.find((destination) => destination.slug === slug);
   return raw ? enrichDestination(raw) : undefined;
 }
 
-export async function getDestinationSlugs(): Promise<string[]> {
+export function getDestinationSlugs(): string[] {
   return destinations.map((destination) => destination.slug);
 }
 
-export async function getNearbyDestinations(
+export function getNearbyDestinations(
   slugs: readonly string[],
-): Promise<DestinationDetail[]> {
-  const set = new Set(slugs);
-  return destinations
-    .filter((destination) => set.has(destination.slug))
-    .map(enrichDestination);
+): DestinationDetail[] {
+  return allEnriched().filter((destination) => slugs.includes(destination.slug));
 }
+
+/** Seed export for DB seeding / server fallbacks. */
+export const DESTINATIONS = allEnriched();
 
 export function getFilterOptions(): FilterOptions {
   const enriched = allEnriched();

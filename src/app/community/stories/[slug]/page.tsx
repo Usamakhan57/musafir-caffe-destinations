@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { siteConfig } from "@/config";
-import { getNearbyCafes } from "@/features/cafes";
-import { getNearbyDestinations } from "@/features/destinations";
+import { getNearbyCafes } from "@/features/cafes/data/cafes-loader";
+import { getNearbyDestinations } from "@/features/destinations/data/destinations-loader";
 import {
   BackToCommunityLink,
   CoffeeRecs,
@@ -18,11 +18,13 @@ import {
   TipsList,
   VisitedCafesSection,
   VisitedDestinationsSection,
+} from "@/features/community";
+import {
   getStoriesBySlugs,
   getStoryBySlug,
   getStorySlugs,
   getTravelerForStory,
-} from "@/features/community";
+} from "@/features/community/data/community-loader";
 
 interface StoryPageProps {
   params: Promise<{ slug: string }>;

@@ -14,7 +14,7 @@ import {
   pushRecentSearch,
   readRecentSearches,
   searchIndex,
-} from "../lib/search";
+} from "../lib/search-client";
 import type { SearchResultItem, SearchResultType } from "../types";
 
 const TYPE_LABELS: Record<SearchResultType | "all", string> = {

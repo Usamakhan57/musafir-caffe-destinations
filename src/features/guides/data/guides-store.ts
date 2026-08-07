@@ -842,36 +842,37 @@ const guides: GuideDetail[] = [
   },
 ];
 
-export async function getAllGuides(): Promise<GuideDetail[]> {
+/** Static catalog seed — production reads go through server catalog loaders. */
+export function getAllGuides(): GuideDetail[] {
   return [...guides];
 }
 
-export async function getGuideBySlug(slug: string): Promise<GuideDetail | null> {
+export function getGuideBySlug(slug: string): GuideDetail | null {
   return guides.find((guide) => guide.slug === slug) ?? null;
 }
 
-export async function getGuideSlugs(): Promise<string[]> {
+export function getGuideSlugs(): string[] {
   return guides.map((guide) => guide.slug);
 }
 
-export async function getGuidesBySlugs(slugs: readonly string[]): Promise<GuideDetail[]> {
+export function getGuidesBySlugs(slugs: readonly string[]): GuideDetail[] {
   const set = new Set(slugs);
   return guides.filter((guide) => set.has(guide.slug));
 }
 
-export async function getFeaturedGuides(): Promise<GuideDetail[]> {
+export function getFeaturedGuides(): GuideDetail[] {
   return guides.filter((guide) => guide.featured);
 }
 
-export async function getTrendingGuides(): Promise<GuideDetail[]> {
+export function getTrendingGuides(): GuideDetail[] {
   return guides.filter((guide) => guide.trending);
 }
 
-export async function getEditorsPicks(): Promise<GuideDetail[]> {
+export function getEditorsPicks(): GuideDetail[] {
   return guides.filter((guide) => guide.editorsPick);
 }
 
-export async function getLatestGuides(limit = 8): Promise<GuideDetail[]> {
+export function getLatestGuides(limit = 8): GuideDetail[] {
   return [...guides]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, limit);
@@ -885,9 +886,12 @@ export function getAuthorBySlug(slug: string): GuideAuthor | undefined {
   return GUIDE_AUTHORS.find((author) => author.slug === slug);
 }
 
-export async function getGuidesByAuthor(authorSlug: string): Promise<GuideDetail[]> {
+export function getGuidesByAuthor(authorSlug: string): GuideDetail[] {
   return guides.filter((guide) => guide.authorSlug === authorSlug);
 }
+
+/** Seed export for DB seeding / server fallbacks. */
+export const GUIDES = guides;
 
 export function getGuideFilterOptions() {
   const countries = Array.from(new Set(guides.map((g) => g.country))).sort();

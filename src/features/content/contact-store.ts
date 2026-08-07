@@ -1,32 +1,38 @@
-import { z } from "zod";
+import "server-only";
 
-export const contactMessageSchema = z.object({
-  name: z.string().min(2).max(80),
-  email: z.string().email(),
-  message: z.string().min(10).max(4000),
-});
+import { createContactMessage as createContactMessageDb } from "@/server/db";
 
-export type ContactMessageInput = z.infer<typeof contactMessageSchema>;
+import type { ContactMessageInput, ContactMessageRecord } from "./schemas";
 
-export interface ContactMessageRecord extends ContactMessageInput {
-  id: string;
-  status: "new" | "queued" | "closed";
-  createdAt: string;
-}
+export type { ContactMessageInput, ContactMessageRecord } from "./schemas";
+export { contactMessageSchema } from "./schemas";
 
-const messages: ContactMessageRecord[] = [];
+const fallback: ContactMessageRecord[] = [];
 
-export function createContactMessage(input: ContactMessageInput): ContactMessageRecord {
+export async function createContactMessage(
+  input: ContactMessageInput,
+): Promise<ContactMessageRecord> {
+  const row = await createContactMessageDb(input);
+  if (row) {
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      message: row.message,
+      status: "queued",
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
   const record: ContactMessageRecord = {
     ...input,
     id: crypto.randomUUID(),
     status: "queued",
     createdAt: new Date().toISOString(),
   };
-  messages.unshift(record);
+  fallback.unshift(record);
   return record;
 }
 
 export function listContactMessages() {
-  return [...messages];
+  return [...fallback];
 }

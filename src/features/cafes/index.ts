@@ -28,12 +28,13 @@ export {
   SignatureCoffeeBanner,
 } from "./components";
 
+export { getFilterOptions } from "./data/cafes-store";
+/** Prefer `./data/cafes-loader` in Server Components / route handlers. */
 export {
   getAllCafes,
   getCafeBySlug,
   getCafeSlugs,
   getNearbyCafes,
-  getFilterOptions,
 } from "./data/cafes-store";
 
 export {

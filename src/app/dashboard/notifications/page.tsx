@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { DashboardPage, DashboardShell } from "@/features/dashboard/components/dashboard-shell";
-import { listNotifications } from "@/features/notifications";
+import { listNotifications } from "@/features/notifications/store";
 import { ROUTES } from "@/constants/routes";
 
 function formatRelative(iso: string) {
@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
     return null;
   }
 
-  const items = listNotifications(session.user.id ?? "demo");
+  const items = await listNotifications(session.user.id ?? "demo");
   const unread = items.filter((item) => item.unread);
   const read = items.filter((item) => !item.unread);
 

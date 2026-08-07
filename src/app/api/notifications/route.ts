@@ -2,9 +2,10 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import {
+  deleteNotifications,
   listNotifications,
   markNotificationsRead,
-} from "@/features/notifications";
+} from "@/features/notifications/store";
 
 export async function GET() {
   const session = await auth();
@@ -12,7 +13,8 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const items = listNotifications(session.user.id ?? "demo").map((item) => ({
+  const userId = session.user.id ?? "demo";
+  const items = (await listNotifications(userId)).map((item) => ({
     ...item,
     time: formatRelative(item.createdAt),
   }));
@@ -31,7 +33,23 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Validation failed" }, { status: 400 });
   }
 
-  markNotificationsRead(parsed.data.ids);
+  await markNotificationsRead(session.user.id ?? "demo", parsed.data.ids);
+  return Response.json({ ok: true });
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsed = z.object({ ids: z.array(z.string()).min(1) }).safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: "Validation failed" }, { status: 400 });
+  }
+
+  await deleteNotifications(session.user.id ?? "demo", parsed.data.ids);
   return Response.json({ ok: true });
 }
 

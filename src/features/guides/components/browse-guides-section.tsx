@@ -6,7 +6,7 @@ import {
   getAllGuides,
   getAuthorForGuide,
   getGuideFilterOptions,
-} from "../data/guides-store";
+} from "../data/guides-loader";
 import {
   GUIDES_PAGE_SIZE,
   filterGuides,

@@ -2,7 +2,7 @@ import {
   getAllStories,
   getAllTravelers,
   getCommunityFilterOptions,
-} from "../data/community-store";
+} from "../data/community-loader";
 import { SectionHeading } from "@/shared/ui";
 
 export default async function CommunityStats() {

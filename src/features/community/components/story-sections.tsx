@@ -6,7 +6,7 @@ import {
   getAllStories,
   getCommunityFilterOptions,
   getTravelerForStory,
-} from "../data/community-store";
+} from "../data/community-loader";
 import {
   COMMUNITY_PAGE_SIZE,
   filterStories,

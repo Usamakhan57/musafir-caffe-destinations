@@ -279,22 +279,25 @@ function allEnriched(): CafeDetail[] {
   return cafes.map(enrichCafe);
 }
 
-export async function getAllCafes(): Promise<CafeDetail[]> {
+export function getAllCafes(): CafeDetail[] {
   return allEnriched();
 }
 
-export async function getCafeBySlug(slug: string): Promise<CafeDetail | null> {
+export function getCafeBySlug(slug: string): CafeDetail | null {
   const raw = cafes.find((cafe) => cafe.slug === slug);
   return raw ? enrichCafe(raw) : null;
 }
 
-export async function getCafeSlugs(): Promise<string[]> {
+export function getCafeSlugs(): string[] {
   return cafes.map((cafe) => cafe.slug);
 }
 
-export async function getNearbyCafes(slugs: readonly string[]): Promise<CafeDetail[]> {
-  return cafes.filter((cafe) => slugs.includes(cafe.slug)).map(enrichCafe);
+export function getNearbyCafes(slugs: readonly string[]): CafeDetail[] {
+  return allEnriched().filter((cafe) => slugs.includes(cafe.slug));
 }
+
+/** Seed export for DB seeding / server fallbacks. */
+export const CAFES = allEnriched();
 
 export function getFilterOptions() {
   const enriched = allEnriched();

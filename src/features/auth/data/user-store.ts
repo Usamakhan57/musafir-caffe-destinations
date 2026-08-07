@@ -1,3 +1,5 @@
+import "server-only";
+
 import { hash, compare } from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";

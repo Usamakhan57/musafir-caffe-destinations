@@ -3,9 +3,16 @@ import {
   contactReceiptEmail,
   sendEmail,
 } from "@/features/email";
-import { createContactMessage, contactMessageSchema } from "@/features/content/contact-store";
+import { createContactMessage } from "@/features/content/contact-store";
+import { contactMessageSchema } from "@/features/content/schemas";
+import { checkRateLimit } from "@/features/auth/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = await checkRateLimit("contact");
+  if (!limited.ok) {
+    return Response.json({ error: "Too many messages. Try again shortly." }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = contactMessageSchema.safeParse(body);
   if (!parsed.success) {
@@ -15,7 +22,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const record = createContactMessage(parsed.data);
+  const record = await createContactMessage(parsed.data);
 
   const receipt = contactReceiptEmail(parsed.data.name);
   receipt.to = parsed.data.email;

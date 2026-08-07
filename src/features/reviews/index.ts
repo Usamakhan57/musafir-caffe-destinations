@@ -1,8 +1,4 @@
+/** Client-safe exports only — server store lives in ./store (API routes). */
 export { ReviewForm } from "./components/review-form";
-export {
-  publicReviewSchema,
-  createPublicReview,
-  listPublicReviews,
-  averageRating,
-} from "./store";
-export type { PublicReviewInput, PublicReviewRecord } from "./store";
+export { publicReviewSchema } from "./schemas";
+export type { PublicReviewInput, PublicReviewRecord } from "./schemas";

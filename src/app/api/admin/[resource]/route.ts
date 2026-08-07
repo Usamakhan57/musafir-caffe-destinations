@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 import { cmsStore } from "@/features/admin/data/cms-store";
+import {
+  dbCreateDestination,
+  dbDeleteDestinations,
+  dbListDestinations,
+  dbUpdateDestination,
+} from "@/features/admin/data/cms-db";
 import { jsonError, jsonOk, requireStaff } from "@/features/admin/lib/api";
 import {
   bulkActionSchema,
@@ -18,6 +24,7 @@ import {
   tagInputSchema,
 } from "@/features/admin/lib/validation";
 import type { AdminResource } from "@/features/admin/types";
+import { listMediaAssets, listReviews } from "@/server/db";
 
 const RESOURCES = new Set<AdminResource>([
   "destinations",
@@ -59,8 +66,10 @@ export async function GET(request: Request, context: RouteContext) {
   const { page, pageSize, q, status } = parsed.data;
 
   switch (resource) {
-    case "destinations":
-      return jsonOk(cmsStore.listDestinations(page, pageSize, q, status));
+    case "destinations": {
+      const fromDb = await dbListDestinations(page, pageSize, q, status);
+      return jsonOk(fromDb ?? cmsStore.listDestinations(page, pageSize, q, status));
+    }
     case "cafes":
       return jsonOk(cmsStore.listCafes(page, pageSize, q, status));
     case "guides":
@@ -71,10 +80,60 @@ export async function GET(request: Request, context: RouteContext) {
       return jsonOk(cmsStore.listCategories(page, pageSize, q));
     case "tags":
       return jsonOk(cmsStore.listTags(page, pageSize, q));
-    case "reviews":
+    case "reviews": {
+      const rows = await listReviews({ status });
+      if (rows) {
+        const filtered = rows.filter((row) =>
+          q
+            ? `${row.targetName} ${row.authorName} ${row.body}`
+                .toLowerCase()
+                .includes(q.toLowerCase())
+            : true,
+        );
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const start = (page - 1) * pageSize;
+        return jsonOk({
+          items: filtered.slice(start, start + pageSize).map((row) => ({
+            id: row.id,
+            targetType: row.targetType,
+            targetId: row.targetId,
+            targetName: row.targetName,
+            rating: row.rating,
+            body: row.body,
+            status: row.status,
+            authorName: row.authorName,
+            createdAt: row.createdAt.toISOString(),
+            updatedAt: row.updatedAt.toISOString(),
+          })),
+          page,
+          pageSize,
+          total,
+          totalPages,
+        });
+      }
       return jsonOk(cmsStore.listReviews(page, pageSize, q, status));
-    case "media":
+    }
+    case "media": {
+      const media = await listMediaAssets(q, page, pageSize);
+      if (media) {
+        return jsonOk({
+          ...media,
+          items: media.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            url: item.url,
+            alt: item.alt ?? "",
+            mimeType: item.mimeType,
+            sizeBytes: item.sizeBytes,
+            folder: item.folder,
+            createdAt: item.createdAt.toISOString(),
+            updatedAt: item.updatedAt.toISOString(),
+          })),
+        });
+      }
       return jsonOk(cmsStore.listMedia(page, pageSize, q));
+    }
     default:
       return jsonError("Unknown resource", 404);
   }
@@ -127,14 +186,13 @@ export async function POST(request: Request, context: RouteContext) {
     case "destinations": {
       const parsed = destinationInputSchema.safeParse(body);
       if (!parsed.success) return jsonError("Validation failed", 400, parsed.error.flatten());
-      return jsonOk(
-        cmsStore.createDestination({
-          ...parsed.data,
-          categoryId: parsed.data.categoryId ?? null,
-          coverImage: parsed.data.coverImage ?? null,
-        }),
-        201,
-      );
+      const input = {
+        ...parsed.data,
+        categoryId: parsed.data.categoryId ?? null,
+        coverImage: parsed.data.coverImage ?? null,
+      };
+      const created = (await dbCreateDestination(input)) ?? cmsStore.createDestination(input);
+      return jsonOk(created, 201);
     }
     case "cafes": {
       const parsed = cafeInputSchema.safeParse(body);
@@ -213,7 +271,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { id, patch } = envelope.data;
 
   let updated: unknown = null;
-  if (resource === "destinations") updated = cmsStore.updateDestination(id, patch);
+  if (resource === "destinations") {
+    updated =
+      (await dbUpdateDestination(id, patch as Partial<import("@/features/admin/types").DestinationRecord>)) ??
+      cmsStore.updateDestination(id, patch);
+  }
   if (resource === "cafes") updated = cmsStore.updateCafe(id, patch);
   if (resource === "guides") updated = cmsStore.updateGuide(id, patch);
   if (resource === "community") updated = cmsStore.updateCommunity(id, patch);
@@ -241,7 +303,9 @@ export async function DELETE(request: Request, context: RouteContext) {
 
   switch (resource) {
     case "destinations":
-      cmsStore.deleteDestinations(parsed.data.ids);
+      if (!(await dbDeleteDestinations(parsed.data.ids))) {
+        cmsStore.deleteDestinations(parsed.data.ids);
+      }
       break;
     case "cafes":
       cmsStore.deleteCafes(parsed.data.ids);

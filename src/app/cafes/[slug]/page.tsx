@@ -18,10 +18,12 @@ import {
   NearbyAttractionsSection,
   MapPlaceholderSection,
   SignatureCoffeeBanner,
+} from "@/features/cafes";
+import {
   getCafeBySlug,
   getCafeSlugs,
   getNearbyCafes,
-} from "@/features/cafes";
+} from "@/features/cafes/data/cafes-loader";
 
 interface CafePageProps {
   params: Promise<{ slug: string }>;
